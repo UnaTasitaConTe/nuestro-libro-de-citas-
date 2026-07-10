@@ -1,10 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const multer = require('multer');
-const authRoutes = require('./routes/auth');
-const citasRoutes = require('./routes/citas');
-const parejaRoutes = require('./routes/pareja');
+const { requireAuth } = require('./adapters/http/middleware/auth');
+const createAuthRouter = require('./adapters/http/routes/auth.routes');
+const createParejaRouter = require('./adapters/http/routes/pareja.routes');
+const createCitasRouter = require('./adapters/http/routes/citas.routes');
+const errorHandler = require('./adapters/http/middleware/errorHandler');
+const { buildContainer } = require('./composition/container');
+
+const { useCases, fileStorage } = buildContainer();
 
 const app = express();
 
@@ -14,16 +18,10 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/citas', citasRoutes);
-app.use('/api/pareja', parejaRoutes);
+app.use('/api/auth', createAuthRouter({ useCases }));
+app.use('/api/citas', createCitasRouter({ requireAuth, useCases, fileStorage }));
+app.use('/api/pareja', createParejaRouter({ requireAuth, useCases }));
 
-app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError || err.message === 'Formato de imagen no soportado') {
-    return res.status(400).json({ error: err.message });
-  }
-  console.error(err);
-  res.status(500).json({ error: 'Error inesperado' });
-});
+app.use(errorHandler);
 
 module.exports = app;

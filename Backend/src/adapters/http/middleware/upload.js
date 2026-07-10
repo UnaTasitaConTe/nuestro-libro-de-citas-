@@ -4,7 +4,7 @@ const crypto = require('crypto');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', '..', 'uploads'));
+    cb(null, path.join(__dirname, '..', '..', '..', '..', 'uploads'));
   },
   filename: (req, file, cb) => {
     const unique = crypto.randomBytes(16).toString('hex');
