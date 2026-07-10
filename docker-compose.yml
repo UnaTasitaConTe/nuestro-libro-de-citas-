@@ -1,0 +1,76 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bookofdate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bookofdate}
+      POSTGRES_DB: ${POSTGRES_DB:-bookofdate}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./Backend/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bookofdate}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 400M
+
+  backend:
+    build: ./Backend
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bookofdate}:${POSTGRES_PASSWORD:-bookofdate}@postgres:5432/${POSTGRES_DB:-bookofdate}
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      FRONTEND_URL: ${FRONTEND_URL}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 300M
+
+  frontend:
+    build: ./Frontend
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 150M
+
+volumes:
+  pgdata:
+  uploads:
+
+networks:
+  default:
+    external: true
+    name: scoobydoo

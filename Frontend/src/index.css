@@ -1,0 +1,374 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Nunito", system-ui, sans-serif;
+  --font-hand: "Caveat", cursive;
+
+  /* Noche estrellada + Chimuelo: azul rey de fondo, amarillo como acento */
+  --color-paper: #0a1030;
+  --color-card: #161f52;
+  --color-ink: #aab3e0;
+  --color-ink-dark: #ffcc33;
+  --color-line: rgba(255, 204, 51, 0.25);
+  --color-royal: #2d43a6;
+  --color-royal-light: #8ba0ff;
+
+  /* Polaroids pegadas en el cielo nocturno, en azul rey */
+  --color-polaroid: #1c2a6b;
+  --color-polaroid-mat: #101a45;
+  --color-polaroid-ink: #ffe9a3;
+  --color-polaroid-ink-soft: #b9c2e8;
+  --color-tape: #ffe6a3;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes drift-stars-a {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-340px, -340px, 0);
+  }
+}
+
+@keyframes drift-stars-b {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(260px, 260px, 0);
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes aurora-a {
+  0%,
+  100% {
+    transform: translate(-5%, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(8%, 6%) scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+@keyframes aurora-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate(-10%, 8%) scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes aurora-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(6%, -8%) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes fly-across {
+  0% {
+    transform: translate(-10vw, 0) scale(var(--fly-scale, 1));
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(55vw, -6vh) scale(var(--fly-scale, 1));
+  }
+  92% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(115vw, 4vh) scale(var(--fly-scale, 1));
+    opacity: 0;
+  }
+}
+
+@keyframes card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fade-in-up {
+  animation: card-in 0.5s ease-out both;
+}
+
+/* --- polaroids pegadas: rotación fija que se endereza al hover --- */
+.polaroid-tilt {
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.polaroid-tilt:hover {
+  transform: rotate(0deg) translateY(-6px) scale(1.02);
+}
+
+.washi-tape {
+  position: absolute;
+  top: -0.75rem;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 4rem;
+  height: 1.5rem;
+  background: color-mix(in oklab, var(--color-tape) 80%, transparent);
+  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  position: relative;
+  min-height: 100svh;
+  background: linear-gradient(180deg, #060a24 0%, #0a1030 30%, #0d1440 55%, #16204f 78%, #1c2a5e 100%);
+  color: #e9ecfb;
+  overflow-x: hidden;
+}
+
+/* --- estrellas en dos capas con parallax (transform, no background-position, para que el navegador solo componga en GPU) --- */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: -50% -50%;
+  pointer-events: none;
+  background-repeat: repeat;
+  z-index: 0;
+  will-change: transform;
+}
+
+body::before {
+  background-size: 340px 340px;
+  background-image: radial-gradient(1.5px 1.5px at 10% 15%, #fff 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 25% 45%, #fff 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 40% 10%, #ffcc33 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 60% 30%, #fff 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 75% 60%, #fff 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 88% 20%, #ffcc33 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 92% 75%, #fff 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 15% 80%, #fff 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 50% 85%, #fff 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 70% 90%, #ffcc33 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 5% 55%, #fff 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 33% 65%, #fff 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 82% 8%, #fff 100%, transparent 0);
+  animation: twinkle 4s ease-in-out infinite, drift-stars-a 90s linear infinite;
+}
+
+body::after {
+  background-size: 260px 260px;
+  background-image: radial-gradient(1px 1px at 20% 20%, #fff 100%, transparent 0),
+    radial-gradient(1px 1px at 35% 55%, #ffcc33 100%, transparent 0),
+    radial-gradient(1.3px 1.3px at 55% 15%, #fff 100%, transparent 0),
+    radial-gradient(1px 1px at 80% 40%, #fff 100%, transparent 0),
+    radial-gradient(1.3px 1.3px at 95% 85%, #ffcc33 100%, transparent 0),
+    radial-gradient(1px 1px at 10% 65%, #fff 100%, transparent 0),
+    radial-gradient(1px 1px at 65% 75%, #fff 100%, transparent 0),
+    radial-gradient(1.3px 1.3px at 45% 90%, #fff 100%, transparent 0);
+  animation: twinkle 5s ease-in-out infinite 1.5s, drift-stars-b 140s linear infinite;
+  opacity: 0.8;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- auroras suaves flotando --- */
+.aurora {
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(60px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aurora-teal {
+  top: -10%;
+  left: -10%;
+  width: 55vw;
+  height: 55vw;
+  background: radial-gradient(circle, rgba(46, 230, 168, 0.35) 0%, transparent 70%);
+  animation: aurora-a 16s ease-in-out infinite;
+}
+
+.aurora-violet {
+  top: 10%;
+  right: -15%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  animation: aurora-b 20s ease-in-out infinite;
+}
+
+.aurora-gold {
+  bottom: -15%;
+  left: 20%;
+  width: 45vw;
+  height: 45vw;
+  background: radial-gradient(circle, rgba(255, 204, 51, 0.16) 0%, transparent 70%);
+  animation: aurora-c 18s ease-in-out infinite;
+}
+
+/* En móvil, el blur grande + mix-blend-mode animado es lo más pesado para la GPU:
+   se reduce el blur, se quita una capa y se apaga el blend mode. */
+@media (max-width: 640px) {
+  .aurora {
+    filter: blur(24px);
+    mix-blend-mode: normal;
+    opacity: 0.5;
+  }
+  .aurora-gold {
+    display: none;
+  }
+  svg.flying-dragon:nth-of-type(2),
+  svg.flying-dragon:nth-of-type(3) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after,
+  .aurora,
+  .moon-glow,
+  .flying-dragon {
+    animation: none !important;
+  }
+}
+
+/* --- luna plana estilo creciente, con halo suave --- */
+.moon-glow {
+  position: fixed;
+  top: 96px;
+  right: 8%;
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  background: #ffe9a3;
+  box-shadow:
+    20px -8px 0 3px #0a1030,
+    0 0 40px 8px rgba(255, 204, 51, 0.3);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 9s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .moon-glow {
+    top: 84px;
+    right: 6%;
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* --- siluetas de montañas / aldea al fondo --- */
+.skyline {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.skyline-back {
+  height: 18vh;
+  background: #0c1440;
+  clip-path: polygon(
+    0% 100%,
+    0% 55%,
+    8% 40%,
+    16% 60%,
+    24% 30%,
+    33% 58%,
+    42% 45%,
+    50% 65%,
+    58% 35%,
+    67% 55%,
+    76% 42%,
+    85% 62%,
+    93% 38%,
+    100% 58%,
+    100% 100%
+  );
+  opacity: 0.9;
+}
+
+.skyline-front {
+  height: 11vh;
+  background: #070b28;
+  clip-path: polygon(
+    0% 100%,
+    0% 70%,
+    10% 45%,
+    20% 65%,
+    30% 40%,
+    40% 68%,
+    50% 50%,
+    60% 70%,
+    70% 42%,
+    80% 66%,
+    90% 48%,
+    100% 68%,
+    100% 100%
+  );
+}
+
+/* --- dragones volando a lo lejos --- */
+.flying-dragon {
+  position: fixed;
+  top: 18%;
+  left: 0;
+  width: 34px;
+  height: 34px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  animation: fly-across linear infinite;
+}
