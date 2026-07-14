@@ -52,3 +52,19 @@ CREATE INDEX citas_pareja_id_idx ON citas (pareja_id);
 CREATE INDEX citas_fecha_idx ON citas (fecha DESC);
 CREATE INDEX cita_entries_cita_id_idx ON cita_entries (cita_id);
 CREATE INDEX entry_photos_entry_id_idx ON entry_photos (entry_id);
+
+CREATE TYPE idea_estado AS ENUM ('POR_HACER', 'HACIENDO', 'HECHA');
+
+CREATE TABLE ideas_citas (
+  id SERIAL PRIMARY KEY,
+  pareja_id INTEGER NOT NULL REFERENCES parejas(id),
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  titulo TEXT NOT NULL,
+  descripcion TEXT,
+  estado idea_estado NOT NULL DEFAULT 'POR_HACER',
+  orden SMALLINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX ideas_citas_pareja_id_idx ON ideas_citas (pareja_id);

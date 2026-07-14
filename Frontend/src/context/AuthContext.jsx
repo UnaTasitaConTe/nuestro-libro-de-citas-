@@ -28,14 +28,20 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
+    client.post('/auth/logout').catch(() => {});
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
   }
 
+  function refreshToken(newToken) {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user, login, register, logout }}>
+    <AuthContext.Provider value={{ token, user, login, register, logout, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,7 @@
 const PgCitaRepository = require('./PgCitaRepository');
 const PgUserRepository = require('./PgUserRepository');
 const PgParejaRepository = require('./PgParejaRepository');
+const PgIdeaCitaRepository = require('./PgIdeaCitaRepository');
 
 class PgUnitOfWork {
   constructor(pool) {
@@ -15,6 +16,7 @@ class PgUnitOfWork {
         citaRepository: new PgCitaRepository(client),
         userRepository: new PgUserRepository(client),
         parejaRepository: new PgParejaRepository(client),
+        ideaCitaRepository: new PgIdeaCitaRepository(client),
       });
       await client.query('COMMIT');
       return result;

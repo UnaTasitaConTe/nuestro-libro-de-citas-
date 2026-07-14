@@ -27,12 +27,28 @@ services:
           cpus: "1.0"
           memory: 400M
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 100M
+
   backend:
     build: ./Backend
     restart: unless-stopped
     logging: *default-logging
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bookofdate}:${POSTGRES_PASSWORD:-bookofdate}@postgres:5432/${POSTGRES_DB:-bookofdate}
+      REDIS_URL: redis://redis:6379
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET}
       SMTP_USER: ${SMTP_USER}
@@ -43,6 +59,8 @@ services:
       - "4000:4000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - uploads:/app/uploads

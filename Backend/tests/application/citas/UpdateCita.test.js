@@ -1,5 +1,6 @@
 const makeUpdateCita = require('../../../src/application/citas/UpdateCita');
 const InMemoryCitaRepository = require('../../fakes/InMemoryCitaRepository');
+const FakeCachePort = require('../../fakes/FakeCachePort');
 const { NotFoundError } = require('../../../src/domain/errors');
 
 describe('UpdateCita', () => {
@@ -13,7 +14,7 @@ describe('UpdateCita', () => {
       repetiriamos: 'SI',
     });
 
-    const updateCita = makeUpdateCita({ citaRepository });
+    const updateCita = makeUpdateCita({ citaRepository, cachePort: new FakeCachePort() });
     const result = await updateCita.execute({
       citaId: cita.id,
       parejaId: 1,
@@ -26,7 +27,7 @@ describe('UpdateCita', () => {
 
   it('lanza NotFoundError si la cita no existe o es de otra pareja', async () => {
     const citaRepository = new InMemoryCitaRepository();
-    const updateCita = makeUpdateCita({ citaRepository });
+    const updateCita = makeUpdateCita({ citaRepository, cachePort: new FakeCachePort() });
 
     await expect(
       updateCita.execute({ citaId: 999, parejaId: 1, data: { lugar: 'X' } })

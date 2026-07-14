@@ -1,8 +1,13 @@
 require('dotenv/config');
-const app = require('./app');
+const http = require('http');
+const { app, authenticate, pubSubPort } = require('./app');
+const { createIdeasWsServer } = require('./adapters/ws/ideasWsServer');
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+createIdeasWsServer({ server, authenticate, pubSubPort });
+
+server.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });

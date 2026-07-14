@@ -1,6 +1,7 @@
 const makeDeleteFoto = require('../../../src/application/citas/DeleteFoto');
 const InMemoryCitaRepository = require('../../fakes/InMemoryCitaRepository');
 const FakeFileStoragePort = require('../../fakes/FakeFileStoragePort');
+const FakeCachePort = require('../../fakes/FakeCachePort');
 const { NotFoundError } = require('../../../src/domain/errors');
 
 describe('DeleteFoto', () => {
@@ -18,7 +19,7 @@ describe('DeleteFoto', () => {
     await citaRepository.addPhoto({ entryId, fotoUrl: '/uploads/a.jpg', orden: 0 });
     const fotoId = citaRepository.photos[0].id;
 
-    const deleteFoto = makeDeleteFoto({ citaRepository, fileStorage });
+    const deleteFoto = makeDeleteFoto({ citaRepository, fileStorage, cachePort: new FakeCachePort() });
     await deleteFoto.execute({ citaId: cita.id, fotoId, parejaId: 1 });
 
     expect(fileStorage.removedStoredFiles).toEqual(['/uploads/a.jpg']);
@@ -29,6 +30,7 @@ describe('DeleteFoto', () => {
     const deleteFoto = makeDeleteFoto({
       citaRepository: new InMemoryCitaRepository(),
       fileStorage: new FakeFileStoragePort(),
+      cachePort: new FakeCachePort(),
     });
 
     await expect(deleteFoto.execute({ citaId: 999, fotoId: 1, parejaId: 1 })).rejects.toThrow(
@@ -46,7 +48,11 @@ describe('DeleteFoto', () => {
       repetiriamos: 'SI',
     });
 
-    const deleteFoto = makeDeleteFoto({ citaRepository, fileStorage: new FakeFileStoragePort() });
+    const deleteFoto = makeDeleteFoto({
+      citaRepository,
+      fileStorage: new FakeFileStoragePort(),
+      cachePort: new FakeCachePort(),
+    });
     await expect(
       deleteFoto.execute({ citaId: cita.id, fotoId: 999, parejaId: 1 })
     ).rejects.toThrow(NotFoundError);

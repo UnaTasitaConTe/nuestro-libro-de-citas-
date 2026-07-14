@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 import Layout from '../components/Layout';
+import { useAuth } from '../context/AuthContext';
 
 export default function ParejaPage() {
+  const { refreshToken } = useAuth();
   const [pareja, setPareja] = useState(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [joinError, setJoinError] = useState('');
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     client
@@ -13,6 +18,21 @@ export default function ParejaPage() {
       .then(({ data }) => setPareja(data))
       .catch(() => setError('No se pudo cargar la información de tu pareja'));
   }, []);
+
+  async function handleJoin(e) {
+    e.preventDefault();
+    setJoinError('');
+    setJoining(true);
+    try {
+      const { data } = await client.post('/pareja/unirme', { inviteCode: joinCode.trim() });
+      refreshToken(data.token);
+      window.location.href = '/pareja';
+    } catch (err) {
+      setJoinError(err.response?.data?.error || 'No se pudo unir a esa pareja');
+    } finally {
+      setJoining(false);
+    }
+  }
 
   if (error) {
     return (
@@ -81,6 +101,32 @@ export default function ParejaPage() {
             {copied ? '¡Copiado!' : 'Copiar'}
           </button>
         </div>
+      </div>
+
+      <div className="rounded-3xl bg-card border border-line p-6 max-w-md mt-6">
+        <p className="uppercase text-xs tracking-widest text-ink mb-3">¿Ya tienes cuenta?</p>
+        <p className="text-sm text-ink mb-4">
+          Si te registraste antes de tener el código de tu pareja, pega su código de invitación
+          acá para unirte a su mismo libro de citas.
+        </p>
+
+        <form onSubmit={handleJoin} className="flex items-center gap-2">
+          <input
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+            placeholder="Código de invitación"
+            className="flex-1 rounded-xl border border-line bg-paper/50 px-4 py-2 text-sm text-ink outline-none"
+          />
+          <button
+            type="submit"
+            disabled={joining || !joinCode.trim()}
+            className="rounded-full border border-royal-light/40 text-royal-light px-4 py-2 text-sm hover:bg-royal-light/10 transition-colors disabled:opacity-50"
+          >
+            {joining ? 'Uniendo...' : 'Unirme'}
+          </button>
+        </form>
+
+        {joinError && <p className="text-red-400 text-sm mt-3">{joinError}</p>}
       </div>
     </Layout>
   );

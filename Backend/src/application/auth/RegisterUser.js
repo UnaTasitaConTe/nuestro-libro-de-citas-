@@ -1,9 +1,10 @@
+const crypto = require('crypto');
 const { ConflictError, ValidationError } = require('../../domain/errors');
 const Pareja = require('../../domain/entities/Pareja');
 const Usuario = require('../../domain/entities/Usuario');
 const { generateInviteCode } = require('../../domain/services/inviteCode');
 
-function makeRegisterUser({ userRepository, unitOfWork, passwordHasher, tokenService }) {
+function makeRegisterUser({ userRepository, unitOfWork, passwordHasher, tokenService, sessionPort, sessionTtlSeconds }) {
   async function execute({ email, password, name, inviteCode }) {
     const existing = await userRepository.findByEmail(email);
     if (existing) {
@@ -30,12 +31,15 @@ function makeRegisterUser({ userRepository, unitOfWork, passwordHasher, tokenSer
       return repos.userRepository.create({ parejaId, email, passwordHash, name });
     });
 
+    const jti = crypto.randomUUID();
     const token = tokenService.sign({
       id: user.id,
       email: user.email,
       name: user.name,
       parejaId: user.pareja_id,
+      jti,
     });
+    await sessionPort.create(jti, { userId: user.id }, sessionTtlSeconds);
 
     return { token, user: Usuario.toPublic(user) };
   }

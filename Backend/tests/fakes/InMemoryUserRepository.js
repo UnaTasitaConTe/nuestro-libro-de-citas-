@@ -30,6 +30,11 @@ class InMemoryUserRepository {
     return partner ? partner.email : null;
   }
 
+  async updateParejaId(userId, parejaId) {
+    const row = this.rows.find((r) => r.id === userId);
+    if (row) row.pareja_id = parejaId;
+  }
+
   _snapshot() {
     return { rows: this.rows.map((r) => ({ ...r })), nextId: this.nextId };
   }

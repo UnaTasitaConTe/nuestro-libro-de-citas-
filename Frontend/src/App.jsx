@@ -8,6 +8,7 @@ import CitaDetailPage from './pages/CitaDetailPage';
 import CitaFormPage from './pages/CitaFormPage';
 import EntryFormPage from './pages/EntryFormPage';
 import ParejaPage from './pages/ParejaPage';
+import BacklogPage from './pages/BacklogPage';
 
 export default function App() {
   return (
@@ -53,6 +54,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ParejaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/backlog"
+          element={
+            <ProtectedRoute>
+              <BacklogPage />
             </ProtectedRoute>
           }
         />

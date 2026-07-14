@@ -42,6 +42,10 @@ class PgUserRepository {
     );
     return rows[0] ? rows[0].email : null;
   }
+
+  async updateParejaId(userId, parejaId) {
+    await this.db.query('UPDATE users SET pareja_id = $1 WHERE id = $2', [parejaId, userId]);
+  }
 }
 
 module.exports = PgUserRepository;

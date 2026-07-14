@@ -2,10 +2,12 @@ const makeLoginUser = require('../../../src/application/auth/LoginUser');
 const InMemoryUserRepository = require('../../fakes/InMemoryUserRepository');
 const FakePasswordHasher = require('../../fakes/FakePasswordHasher');
 const FakeTokenService = require('../../fakes/FakeTokenService');
+const FakeSessionPort = require('../../fakes/FakeSessionPort');
 const { UnauthorizedError } = require('../../../src/domain/errors');
 
 describe('LoginUser', () => {
   let userRepository;
+  let sessionPort;
   let loginUser;
 
   beforeEach(async () => {
@@ -17,10 +19,13 @@ describe('LoginUser', () => {
       name: 'Ok',
     });
 
+    sessionPort = new FakeSessionPort();
     loginUser = makeLoginUser({
       userRepository,
       passwordHasher: new FakePasswordHasher(),
       tokenService: new FakeTokenService(),
+      sessionPort,
+      sessionTtlSeconds: 2592000,
     });
   });
 
@@ -28,6 +33,11 @@ describe('LoginUser', () => {
     const result = await loginUser.execute({ email: 'ok@test.com', password: 'secret1' });
     expect(result.user).toEqual({ id: 1, email: 'ok@test.com', name: 'Ok' });
     expect(result.token).toBeTypeOf('string');
+  });
+
+  it('crea una sesión en Redis asociada al jti del token', async () => {
+    await loginUser.execute({ email: 'ok@test.com', password: 'secret1' });
+    expect(sessionPort.sessions.size).toBe(1);
   });
 
   it('rechaza un email inexistente', async () => {

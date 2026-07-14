@@ -1,7 +1,8 @@
 const { NotFoundError } = require('../../domain/errors');
 const Cita = require('../../domain/entities/Cita');
+const { citasVersionKey } = require('../shared/cacheKeys');
 
-function makeDeleteCita({ citaRepository, fileStorage }) {
+function makeDeleteCita({ citaRepository, fileStorage, cachePort }) {
   async function execute({ citaId, parejaId }) {
     const cita = await citaRepository.findByIdAndPareja(citaId, parejaId);
     if (!cita) {
@@ -13,6 +14,7 @@ function makeDeleteCita({ citaRepository, fileStorage }) {
 
     const photoUrls = await citaRepository.findPhotoUrlsByEntryIds(entryIds);
     await citaRepository.deleteById(citaId, parejaId);
+    await cachePort.incr(citasVersionKey(parejaId));
     photoUrls.forEach((url) => fileStorage.removeStoredFile(url));
   }
 

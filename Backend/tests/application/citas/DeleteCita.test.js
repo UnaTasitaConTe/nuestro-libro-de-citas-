@@ -1,6 +1,7 @@
 const makeDeleteCita = require('../../../src/application/citas/DeleteCita');
 const InMemoryCitaRepository = require('../../fakes/InMemoryCitaRepository');
 const FakeFileStoragePort = require('../../fakes/FakeFileStoragePort');
+const FakeCachePort = require('../../fakes/FakeCachePort');
 const { NotFoundError, ValidationError } = require('../../../src/domain/errors');
 
 async function createCitaConEntries(citaRepository, entryCount) {
@@ -28,7 +29,7 @@ describe('DeleteCita', () => {
     const fileStorage = new FakeFileStoragePort();
     const cita = await createCitaConEntries(citaRepository, 1);
 
-    const deleteCita = makeDeleteCita({ citaRepository, fileStorage });
+    const deleteCita = makeDeleteCita({ citaRepository, fileStorage, cachePort: new FakeCachePort() });
     await deleteCita.execute({ citaId: cita.id, parejaId: 1 });
 
     expect(fileStorage.removedStoredFiles).toEqual(['/uploads/0.jpg']);
@@ -40,7 +41,7 @@ describe('DeleteCita', () => {
     const fileStorage = new FakeFileStoragePort();
     const cita = await createCitaConEntries(citaRepository, 2);
 
-    const deleteCita = makeDeleteCita({ citaRepository, fileStorage });
+    const deleteCita = makeDeleteCita({ citaRepository, fileStorage, cachePort: new FakeCachePort() });
     await expect(deleteCita.execute({ citaId: cita.id, parejaId: 1 })).rejects.toThrow(
       ValidationError
     );
@@ -53,6 +54,7 @@ describe('DeleteCita', () => {
     const deleteCita = makeDeleteCita({
       citaRepository: new InMemoryCitaRepository(),
       fileStorage: new FakeFileStoragePort(),
+      cachePort: new FakeCachePort(),
     });
 
     await expect(deleteCita.execute({ citaId: 999, parejaId: 1 })).rejects.toThrow(NotFoundError);

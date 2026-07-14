@@ -1,6 +1,7 @@
 const notifyPartner = require('./notifyPartner');
+const { citasVersionKey } = require('../shared/cacheKeys');
 
-function makeCreateCita({ citaRepository, unitOfWork, fileStorage, userRepository, notificationPort }) {
+function makeCreateCita({ citaRepository, unitOfWork, fileStorage, userRepository, notificationPort, cachePort }) {
   async function execute({ parejaId, userId, userName, data, files }) {
     let createdCitaId;
 
@@ -39,6 +40,8 @@ function makeCreateCita({ citaRepository, unitOfWork, fileStorage, userRepositor
       fileStorage.removeFiles(files);
       throw err;
     }
+
+    await cachePort.incr(citasVersionKey(parejaId));
 
     const cita = await citaRepository.getCitaWithEntries(createdCitaId, parejaId);
 

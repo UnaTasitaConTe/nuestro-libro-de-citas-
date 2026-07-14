@@ -5,5 +5,6 @@
  * @property {(parejaId: number) => Promise<number>} countByPareja
  * @property {(parejaId: number) => Promise<object[]>} findMembersByPareja {id,name,email} ORDER BY id.
  * @property {(parejaId: number, excludeUserId: number) => Promise<string|null>} findPartnerEmail
+ * @property {(userId: number, parejaId: number) => Promise<void>} updateParejaId
  */
 module.exports = {};

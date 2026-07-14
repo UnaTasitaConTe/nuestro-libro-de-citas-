@@ -4,6 +4,7 @@ const InMemoryUserRepository = require('../../fakes/InMemoryUserRepository');
 const FakeUnitOfWork = require('../../fakes/FakeUnitOfWork');
 const FakeFileStoragePort = require('../../fakes/FakeFileStoragePort');
 const FakeNotificationPort = require('../../fakes/FakeNotificationPort');
+const FakeCachePort = require('../../fakes/FakeCachePort');
 
 function baseData() {
   return { nombre: 'Cine', fecha: '2026-01-01', lugar: 'Centro', repetiriamos: 'SI', valoracion: 5 };
@@ -23,7 +24,14 @@ describe('CreateCita', () => {
     unitOfWork = new FakeUnitOfWork({ citaRepository, userRepository });
     fileStorage = new FakeFileStoragePort();
     notificationPort = new FakeNotificationPort();
-    createCita = makeCreateCita({ citaRepository, unitOfWork, fileStorage, userRepository, notificationPort });
+    createCita = makeCreateCita({
+      citaRepository,
+      unitOfWork,
+      fileStorage,
+      userRepository,
+      notificationPort,
+      cachePort: new FakeCachePort(),
+    });
   });
 
   it('crea la cita, la entry del creador y las fotos de forma atómica', async () => {

@@ -1,12 +1,16 @@
 const makeListCitas = require('../../../src/application/citas/ListCitas');
 const InMemoryCitaRepository = require('../../fakes/InMemoryCitaRepository');
+const FakeCachePort = require('../../fakes/FakeCachePort');
+const { citasVersionKey } = require('../../../src/application/shared/cacheKeys');
 
 describe('ListCitas', () => {
   let citaRepository;
+  let cachePort;
   let listCitas;
 
   beforeEach(async () => {
     citaRepository = new InMemoryCitaRepository();
+    cachePort = new FakeCachePort();
     for (let i = 1; i <= 3; i++) {
       await citaRepository.create({
         parejaId: 1,
@@ -16,7 +20,7 @@ describe('ListCitas', () => {
         repetiriamos: 'SI',
       });
     }
-    listCitas = makeListCitas({ citaRepository });
+    listCitas = makeListCitas({ citaRepository, cachePort });
   });
 
   it('pagina con valores por defecto', async () => {
@@ -40,5 +44,22 @@ describe('ListCitas', () => {
   it('usa limit=10 cuando limit no es numérico', async () => {
     const result = await listCitas.execute({ parejaId: 1, limit: 'abc' });
     expect(result.totalPages).toBe(1);
+  });
+
+  it('sirve la segunda llamada desde caché aunque el repositorio cambie', async () => {
+    const first = await listCitas.execute({ parejaId: 1 });
+    citaRepository.citas = [];
+
+    const second = await listCitas.execute({ parejaId: 1 });
+    expect(second).toEqual(first);
+  });
+
+  it('devuelve datos frescos tras bumpear la versión (invalidación)', async () => {
+    await listCitas.execute({ parejaId: 1 });
+    await cachePort.incr(citasVersionKey(1));
+    citaRepository.citas = [];
+
+    const result = await listCitas.execute({ parejaId: 1 });
+    expect(result.citas).toHaveLength(0);
   });
 });

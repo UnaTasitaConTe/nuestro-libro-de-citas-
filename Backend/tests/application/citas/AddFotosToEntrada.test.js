@@ -1,12 +1,13 @@
 const makeAddFotosToEntrada = require('../../../src/application/citas/AddFotosToEntrada');
 const InMemoryCitaRepository = require('../../fakes/InMemoryCitaRepository');
 const FakeFileStoragePort = require('../../fakes/FakeFileStoragePort');
+const FakeCachePort = require('../../fakes/FakeCachePort');
 const { NotFoundError, ValidationError } = require('../../../src/domain/errors');
 
 function buildDeps() {
   const citaRepository = new InMemoryCitaRepository();
   const fileStorage = new FakeFileStoragePort();
-  const addFotos = makeAddFotosToEntrada({ citaRepository, fileStorage });
+  const addFotos = makeAddFotosToEntrada({ citaRepository, fileStorage, cachePort: new FakeCachePort() });
   return { citaRepository, fileStorage, addFotos };
 }
 

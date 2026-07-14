@@ -4,6 +4,7 @@ const InMemoryCitaRepository = require('../../fakes/InMemoryCitaRepository');
 const InMemoryUserRepository = require('../../fakes/InMemoryUserRepository');
 const FakeFileStoragePort = require('../../fakes/FakeFileStoragePort');
 const FakeNotificationPort = require('../../fakes/FakeNotificationPort');
+const FakeCachePort = require('../../fakes/FakeCachePort');
 const { NotFoundError, ValidationError } = require('../../../src/domain/errors');
 
 const entryBodySchema = z.object({
@@ -25,6 +26,7 @@ function buildDeps() {
     userRepository,
     notificationPort,
     entryBodySchema,
+    cachePort: new FakeCachePort(),
   });
   return { citaRepository, userRepository, fileStorage, notificationPort, upsertMiEntrada };
 }

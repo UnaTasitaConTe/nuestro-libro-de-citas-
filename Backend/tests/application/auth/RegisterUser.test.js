@@ -4,23 +4,28 @@ const InMemoryParejaRepository = require('../../fakes/InMemoryParejaRepository')
 const FakeUnitOfWork = require('../../fakes/FakeUnitOfWork');
 const FakePasswordHasher = require('../../fakes/FakePasswordHasher');
 const FakeTokenService = require('../../fakes/FakeTokenService');
+const FakeSessionPort = require('../../fakes/FakeSessionPort');
 const { ConflictError, ValidationError } = require('../../../src/domain/errors');
 
 describe('RegisterUser', () => {
   let userRepository;
   let parejaRepository;
   let unitOfWork;
+  let sessionPort;
   let registerUser;
 
   beforeEach(() => {
     userRepository = new InMemoryUserRepository();
     parejaRepository = new InMemoryParejaRepository();
     unitOfWork = new FakeUnitOfWork({ userRepository, parejaRepository });
+    sessionPort = new FakeSessionPort();
     registerUser = makeRegisterUser({
       userRepository,
       unitOfWork,
       passwordHasher: new FakePasswordHasher(),
       tokenService: new FakeTokenService(),
+      sessionPort,
+      sessionTtlSeconds: 2592000,
     });
   });
 
@@ -34,6 +39,7 @@ describe('RegisterUser', () => {
     expect(result.user).toEqual({ id: 1, email: 'a@test.com', name: 'Ana' });
     expect(await parejaRepository.findById(1)).not.toBeNull();
     expect(await userRepository.countByPareja(1)).toBe(1);
+    expect(sessionPort.sessions.size).toBe(1);
   });
 
   it('une al usuario a una pareja existente con inviteCode válido', async () => {
