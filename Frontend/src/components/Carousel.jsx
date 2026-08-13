@@ -7,8 +7,8 @@ export default function Carousel({ photos, alt, onDelete }) {
 
   if (!photos.length) {
     return (
-      <div className="aspect-square max-w-xs mx-auto rounded-sm bg-polaroid border border-ink-dark/30 flex items-center justify-center p-3">
-        <span className="text-polaroid-ink-soft text-sm">sin foto</span>
+      <div className="mx-auto flex aspect-square max-w-xs items-center justify-center rounded-md border border-ink-dark/25 bg-polaroid p-3">
+        <span className="text-sm text-polaroid-ink-soft">sin foto</span>
       </div>
     );
   }
@@ -30,7 +30,7 @@ export default function Carousel({ photos, alt, onDelete }) {
   }
 
   return (
-    <div className="relative h-80 sm:h-[26rem] flex items-center justify-center overflow-hidden group">
+    <div className="group relative flex h-80 items-center justify-center overflow-hidden sm:h-[26rem]">
       {photos.map((p, i) => {
         let offset = i - index;
         if (offset > n / 2) offset -= n;
@@ -41,7 +41,7 @@ export default function Carousel({ photos, alt, onDelete }) {
         const isCenter = offset === 0;
         const scale = isCenter ? 1 : abs === 1 ? 0.78 : 0.6;
         const translate = offset * 62;
-        const opacity = isCenter ? 1 : abs === 1 ? 0.55 : 0.3;
+        const opacity = isCenter ? 1 : abs === 1 ? 0.5 : 0.25;
         const tilt = isCenter ? 0 : TILTS[Math.abs(i * 2 + (offset > 0 ? 1 : 0)) % TILTS.length];
 
         return (
@@ -52,7 +52,7 @@ export default function Carousel({ photos, alt, onDelete }) {
             onClick={() => go(i)}
             onKeyDown={(e) => e.key === 'Enter' && go(i)}
             aria-label={`Ver foto ${i + 1}`}
-            className="absolute w-44 sm:w-56 transition-all duration-500 ease-out"
+            className="absolute w-44 transition-all duration-500 ease-out sm:w-56"
             style={{
               transform: `translateX(${translate}%) scale(${scale}) rotate(${tilt}deg)`,
               opacity,
@@ -60,7 +60,13 @@ export default function Carousel({ photos, alt, onDelete }) {
               cursor: isCenter ? 'default' : 'pointer',
             }}
           >
-            <div className="relative bg-polaroid border border-ink-dark/30 rounded-sm p-2.5 pb-4 shadow-[0_16px_32px_rgba(0,0,0,0.5)]">
+            <div
+              className={`relative rounded-md border border-ink-dark/25 bg-polaroid p-2.5 pb-4 transition-shadow duration-500 ${
+                isCenter
+                  ? 'shadow-[0_28px_54px_-16px_rgba(3,6,20,0.9)]'
+                  : 'shadow-[0_14px_28px_rgba(3,6,20,0.5)]'
+              }`}
+            >
               {isCenter && onDelete && (
                 <button
                   type="button"
@@ -69,16 +75,16 @@ export default function Carousel({ photos, alt, onDelete }) {
                     onDelete(p);
                   }}
                   aria-label="Borrar foto"
-                  className="absolute -top-2 -right-2 z-10 w-7 h-7 rounded-full bg-paper border border-line text-red-400 text-sm flex items-center justify-center shadow-md hover:bg-red-400/10 transition-colors"
+                  className="icon-btn absolute -right-3 -top-3 z-10 h-8 w-8 border-danger/40 bg-paper text-sm text-danger hover:border-danger hover:text-danger"
                 >
                   ×
                 </button>
               )}
-              <div className="aspect-square bg-polaroid-mat overflow-hidden">
-                <img src={p.foto_url} alt={alt} className="w-full h-full object-cover" />
+              <div className="aspect-square overflow-hidden bg-polaroid-mat">
+                <img src={p.foto_url} alt={alt} loading="lazy" className="h-full w-full object-cover" />
               </div>
               {p.authorName && (
-                <p className="font-hand text-lg leading-none text-center text-polaroid-ink mt-2">
+                <p className="mt-2 text-center font-hand text-lg leading-none text-polaroid-ink">
                   {p.authorName}
                 </p>
               )}
@@ -93,7 +99,7 @@ export default function Carousel({ photos, alt, onDelete }) {
             type="button"
             onClick={prev}
             aria-label="Foto anterior"
-            className="absolute z-20 left-1 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-paper/80 text-ink-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            className="icon-btn absolute left-1 top-1/2 z-20 -translate-y-1/2 bg-paper/85 opacity-0 backdrop-blur-md transition-opacity duration-300 focus-visible:opacity-100 group-hover:opacity-100 sm:left-4"
           >
             ‹
           </button>
@@ -101,11 +107,11 @@ export default function Carousel({ photos, alt, onDelete }) {
             type="button"
             onClick={next}
             aria-label="Foto siguiente"
-            className="absolute z-20 right-1 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-paper/80 text-ink-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            className="icon-btn absolute right-1 top-1/2 z-20 -translate-y-1/2 bg-paper/85 opacity-0 backdrop-blur-md transition-opacity duration-300 focus-visible:opacity-100 group-hover:opacity-100 sm:right-4"
           >
             ›
           </button>
-          <div className="absolute z-20 bottom-1 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="absolute bottom-1 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 rounded-full border border-line bg-paper/70 px-2.5 py-1.5 backdrop-blur-md">
             {photos.map((p, i) => (
               <button
                 type="button"
@@ -115,8 +121,8 @@ export default function Carousel({ photos, alt, onDelete }) {
                   go(i);
                 }}
                 aria-label={`Ir a foto ${i + 1}`}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  i === index ? 'bg-ink-dark' : 'bg-paper/80'
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === index ? 'w-5 bg-ink-dark' : 'w-1.5 bg-ink/40 hover:bg-ink/70'
                 }`}
               />
             ))}

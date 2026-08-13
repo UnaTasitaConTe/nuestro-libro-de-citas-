@@ -31,7 +31,7 @@ describe('LoginUser', () => {
 
   it('devuelve token y usuario público con credenciales válidas', async () => {
     const result = await loginUser.execute({ email: 'ok@test.com', password: 'secret1' });
-    expect(result.user).toEqual({ id: 1, email: 'ok@test.com', name: 'Ok' });
+    expect(result.user).toEqual({ id: 1, email: 'ok@test.com', name: 'Ok', role: 'MEMBER' });
     expect(result.token).toBeTypeOf('string');
   });
 

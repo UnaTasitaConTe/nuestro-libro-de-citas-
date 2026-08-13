@@ -16,34 +16,41 @@ export default function CitaCard({ cita }) {
   return (
     <Link
       to={`/citas/${cita.id}`}
-      className="polaroid-tilt relative block bg-polaroid border border-ink-dark/30 rounded-sm p-3 pb-5 shadow-[0_10px_24px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_38px_rgba(255,204,51,0.3)]"
+      className="polaroid-tilt group relative block rounded-md border border-ink-dark/25 bg-polaroid p-3 pb-5 shadow-[0_12px_28px_rgba(3,6,20,0.55)] hover:shadow-[0_26px_50px_-18px_rgba(255,204,51,0.45)]"
       style={{ '--tilt': `${rotation}deg` }}
     >
       <span className="washi-tape" aria-hidden="true" />
 
-      <div className="aspect-square bg-polaroid-mat overflow-hidden">
+      <div className="aspect-square overflow-hidden bg-polaroid-mat">
         {firstPhoto ? (
-          <img src={firstPhoto} alt={fecha} className="w-full h-full object-cover" />
+          <img
+            src={firstPhoto}
+            alt={`Foto de ${cita.nombre}`}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-polaroid-ink-soft text-sm">sin foto</span>
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-sm text-polaroid-ink-soft">sin foto</span>
           </div>
         )}
       </div>
 
       <div className="pt-3">
-        <p className="font-hand text-2xl leading-tight text-polaroid-ink line-clamp-2">{cita.nombre}</p>
-        <p className="text-polaroid-ink-soft text-xs mt-1 truncate">{cita.lugar}</p>
-        <p className="text-polaroid-ink-soft text-xs">{fecha}</p>
+        <p className="font-hand text-2xl leading-tight text-polaroid-ink line-clamp-2">
+          {cita.nombre}
+        </p>
+        <p className="mt-1 truncate text-xs text-polaroid-ink-soft">{cita.lugar}</p>
+        <p className="text-xs text-polaroid-ink-soft">{fecha}</p>
 
         {promedio > 0 && (
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="mt-2 flex items-center gap-1.5">
             <HeartRating value={Math.round(promedio)} readOnly size="text-sm" />
             <span className="text-[11px] text-polaroid-ink-soft">{promedio.toFixed(1)}</span>
           </div>
         )}
 
-        <p className="text-[11px] mt-1.5 text-polaroid-ink-soft italic">
+        <p className="mt-2 text-[11px] italic text-polaroid-ink-soft">
           {complete
             ? 'las dos versiones contadas 💛'
             : cita.entries.length === 1

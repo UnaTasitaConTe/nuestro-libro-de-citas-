@@ -140,15 +140,16 @@ class PgCitaRepository {
     );
   }
 
-  async updateFields(citaId, parejaId, { fecha, lugar, repetiriamos }) {
+  async updateFields(citaId, parejaId, { nombre, fecha, lugar, repetiriamos }) {
     const { rows } = await this.db.query(
       `UPDATE citas SET
-         fecha = COALESCE($1, fecha),
-         lugar = COALESCE($2, lugar),
-         repetiriamos = COALESCE($3, repetiriamos)
-       WHERE id = $4 AND pareja_id = $5
+         nombre = COALESCE($1, nombre),
+         fecha = COALESCE($2, fecha),
+         lugar = COALESCE($3, lugar),
+         repetiriamos = COALESCE($4, repetiriamos)
+       WHERE id = $5 AND pareja_id = $6
        RETURNING id`,
-      [fecha ?? null, lugar ?? null, repetiriamos ?? null, citaId, parejaId]
+      [nombre ?? null, fecha ?? null, lugar ?? null, repetiriamos ?? null, citaId, parejaId]
     );
     return Boolean(rows[0]);
   }

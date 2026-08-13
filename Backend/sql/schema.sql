@@ -1,4 +1,5 @@
 CREATE TYPE repetiriamos AS ENUM ('SI', 'TALVEZ', 'NO');
+CREATE TYPE user_role AS ENUM ('MEMBER', 'ADMIN');
 
 CREATE TABLE parejas (
   id SERIAL PRIMARY KEY,
@@ -12,6 +13,7 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   name TEXT NOT NULL,
+  role user_role NOT NULL DEFAULT 'MEMBER',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

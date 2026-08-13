@@ -22,6 +22,7 @@ const citaFieldsSchema = z.object({
 const createCitaSchema = entryBodySchema.merge(citaFieldsSchema);
 
 const updateCitaSchema = z.object({
+  nombre: z.string().min(1).optional(),
   fecha: z.string().refine((v) => !Number.isNaN(Date.parse(v)), 'Fecha inválida').optional(),
   lugar: z.string().min(1).optional(),
   repetiriamos: z.enum(Cita.REPETIRIAMOS_VALUES).optional(),

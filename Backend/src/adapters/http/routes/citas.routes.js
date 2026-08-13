@@ -51,6 +51,7 @@ function createCitasRouter({ requireAuth, useCases, fileStorage }) {
     const cita = await useCases.updateCita.execute({
       citaId: Number(req.params.id),
       parejaId: req.user.parejaId,
+      role: req.user.role,
       data: parsed.data,
     });
     res.json(cita);
@@ -92,6 +93,7 @@ function createCitasRouter({ requireAuth, useCases, fileStorage }) {
     await useCases.deleteCita.execute({
       citaId: Number(req.params.id),
       parejaId: req.user.parejaId,
+      role: req.user.role,
     });
     res.status(204).send();
   });

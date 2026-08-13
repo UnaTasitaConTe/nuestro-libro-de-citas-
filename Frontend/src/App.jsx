@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage';
 import CitasListPage from './pages/CitasListPage';
 import CitaDetailPage from './pages/CitaDetailPage';
 import CitaFormPage from './pages/CitaFormPage';
+import CitaEditPage from './pages/CitaEditPage';
 import EntryFormPage from './pages/EntryFormPage';
 import ParejaPage from './pages/ParejaPage';
 import BacklogPage from './pages/BacklogPage';
@@ -38,6 +39,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CitaDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/citas/:id/editar"
+          element={
+            <ProtectedRoute>
+              <CitaEditPage />
             </ProtectedRoute>
           }
         />

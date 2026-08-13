@@ -8,10 +8,10 @@ class InMemoryUserRepository {
     return this.rows.find((r) => r.email === email) || null;
   }
 
-  async create({ parejaId, email, passwordHash, name }) {
-    const row = { id: this.nextId++, pareja_id: parejaId, email, password_hash: passwordHash, name };
+  async create({ parejaId, email, passwordHash, name, role = 'MEMBER' }) {
+    const row = { id: this.nextId++, pareja_id: parejaId, email, password_hash: passwordHash, name, role };
     this.rows.push(row);
-    return { id: row.id, pareja_id: row.pareja_id, email: row.email, name: row.name };
+    return { id: row.id, pareja_id: row.pareja_id, email: row.email, name: row.name, role: row.role };
   }
 
   async countByPareja(parejaId) {
