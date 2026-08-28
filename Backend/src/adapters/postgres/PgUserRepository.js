@@ -43,6 +43,14 @@ class PgUserRepository {
     return rows[0] ? rows[0].email : null;
   }
 
+  async findPartnerIdByPareja(parejaId, excludeUserId) {
+    const { rows } = await this.db.query(
+      'SELECT id FROM users WHERE pareja_id = $1 AND id != $2',
+      [parejaId, excludeUserId]
+    );
+    return rows[0] ? rows[0].id : null;
+  }
+
   async updateParejaId(userId, parejaId) {
     await this.db.query('UPDATE users SET pareja_id = $1 WHERE id = $2', [parejaId, userId]);
   }

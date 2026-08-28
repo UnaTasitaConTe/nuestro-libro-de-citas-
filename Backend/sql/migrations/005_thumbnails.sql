@@ -1,0 +1,1 @@
+ALTER TABLE entry_photos ADD COLUMN IF NOT EXISTS thumb_url TEXT;

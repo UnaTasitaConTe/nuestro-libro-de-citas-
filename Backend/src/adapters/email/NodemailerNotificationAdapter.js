@@ -47,6 +47,39 @@ class NodemailerNotificationAdapter {
       console.error('Error enviando notificación por correo:', err.message);
     }
   }
+
+  async notifyNudge({ to, authorName, citaNombre, citaId }) {
+    const t = getTransporter();
+    if (!t) {
+      console.warn('SMTP no configurado; se omite el envío de recordatorio');
+      return;
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || '';
+    const link = frontendUrl ? `${frontendUrl}/citas/${citaId}/mi-entrada` : null;
+
+    try {
+      await t.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to,
+        subject: `${authorName} quiere leer tu versión de "${citaNombre}" 💌`,
+        text: [
+          `¡Hey! ${authorName} ya contó su versión de la cita "${citaNombre}" y quiere leer la tuya.`,
+          '¿Te animas a escribirla? Solo toma un minuto 💛',
+          link ? `Escribe tu versión aquí: ${link}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n\n'),
+        html: [
+          `<p>¡Hey! <strong>${authorName}</strong> ya contó su versión de la cita "<strong>${citaNombre}</strong>" y quiere leer la tuya.</p>`,
+          `<p>¿Te animas a escribirla? Solo toma un minuto 💛</p>`,
+          link ? `<p><a href="${link}">Escribe tu versión aquí</a></p>` : '',
+        ].join(''),
+      });
+    } catch (err) {
+      console.error('Error enviando recordatorio por correo:', err.message);
+    }
+  }
 }
 
 module.exports = NodemailerNotificationAdapter;

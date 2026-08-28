@@ -10,6 +10,7 @@ const entryBodySchema = z.object({
   comoTeSentiste: z.string().optional(),
   loQueMasGusto: z.string().optional(),
   loQueMenosGusto: z.string().optional(),
+  intimidad: z.preprocess((v) => v === 'true' || v === true, z.boolean()).optional().default(false),
 });
 
 const citaFieldsSchema = z.object({

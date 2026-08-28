@@ -14,6 +14,7 @@ const emptyEntry = {
   comoTeSentiste: '',
   loQueMasGusto: '',
   loQueMenosGusto: '',
+  intimidad: false,
 };
 
 export default function EntryFormPage() {
@@ -39,6 +40,7 @@ export default function EntryFormPage() {
           comoTeSentiste: mine.como_te_sentiste || '',
           loQueMasGusto: mine.lo_que_mas_gusto || '',
           loQueMenosGusto: mine.lo_que_menos_gusto || '',
+          intimidad: mine.intimidad || false,
         });
         setExistingPhotos(mine.photos || []);
       }
@@ -74,6 +76,7 @@ export default function EntryFormPage() {
       body.append('comoTeSentiste', entry.comoTeSentiste);
       body.append('loQueMasGusto', entry.loQueMasGusto);
       body.append('loQueMenosGusto', entry.loQueMenosGusto);
+      body.append('intimidad', entry.intimidad);
       fotos.forEach((f) => body.append('fotos', f));
 
       await client.put(`/citas/${id}/mi-entrada`, body);

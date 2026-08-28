@@ -12,6 +12,7 @@ const emptyEntry = {
   comoTeSentiste: '',
   loQueMasGusto: '',
   loQueMenosGusto: '',
+  intimidad: false,
 };
 
 export default function CitaFormPage() {
@@ -46,6 +47,7 @@ export default function CitaFormPage() {
       body.append('comoTeSentiste', entry.comoTeSentiste);
       body.append('loQueMasGusto', entry.loQueMasGusto);
       body.append('loQueMenosGusto', entry.loQueMenosGusto);
+      body.append('intimidad', entry.intimidad);
       fotos.forEach((f) => body.append('fotos', f));
 
       const { data } = await client.post('/citas', body);

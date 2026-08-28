@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import CitaCard from '../components/CitaCard';
 import Pagination from '../components/Pagination';
+import usePageParam from '../hooks/usePageParam';
 
 const PAGE_SIZE = 10;
 
@@ -12,7 +13,7 @@ export default function CitasListPage() {
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageParam();
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {

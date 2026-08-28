@@ -34,6 +34,29 @@ function createCitasRouter({ requireAuth, useCases, fileStorage }) {
     res.json(result);
   });
 
+  router.get('/calendar', async (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!year || !month || month < 1 || month > 12) {
+      return res.status(400).json({ error: 'year y month son requeridos (month 1-12)' });
+    }
+    const citas = await useCases.listCitasByMonth.execute({
+      parejaId: req.user.parejaId,
+      year,
+      month,
+    });
+    res.json(citas);
+  });
+
+  router.get('/gallery', async (req, res) => {
+    const result = await useCases.listGallery.execute({
+      parejaId: req.user.parejaId,
+      page: req.query.page,
+      limit: req.query.limit,
+    });
+    res.json(result);
+  });
+
   router.get('/:id', async (req, res) => {
     const cita = await useCases.getCita.execute({
       citaId: Number(req.params.id),
@@ -78,6 +101,16 @@ function createCitasRouter({ requireAuth, useCases, fileStorage }) {
       files: req.files,
     });
     res.json(cita);
+  });
+
+  router.post('/:id/nudge', async (req, res) => {
+    const result = await useCases.nudgePartner.execute({
+      citaId: Number(req.params.id),
+      parejaId: req.user.parejaId,
+      userId: req.user.id,
+      userName: req.user.name,
+    });
+    res.json(result);
   });
 
   router.delete('/:id/fotos/:fotoId', async (req, res) => {

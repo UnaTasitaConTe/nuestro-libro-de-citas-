@@ -8,7 +8,8 @@ const ROTATIONS = [-3, 2, -1.5, 3, -2.5, 1.5, -3.5, 2.5];
 export default function CitaCard({ cita }) {
   const fecha = formatFecha(cita.fecha);
 
-  const firstPhoto = cita.entries.flatMap((e) => e.photos || [])[0]?.foto_url;
+  const firstPhoto = cita.entries.flatMap((e) => e.photos || [])[0];
+  const cardImage = firstPhoto?.thumb_url || firstPhoto?.foto_url;
   const complete = cita.entries.length === 2;
   const promedio = averageValoracion(cita.entries);
   const rotation = ROTATIONS[cita.id % ROTATIONS.length];
@@ -22,9 +23,9 @@ export default function CitaCard({ cita }) {
       <span className="washi-tape" aria-hidden="true" />
 
       <div className="aspect-square overflow-hidden bg-polaroid-mat">
-        {firstPhoto ? (
+        {cardImage ? (
           <img
-            src={firstPhoto}
+            src={cardImage}
             alt={`Foto de ${cita.nombre}`}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"

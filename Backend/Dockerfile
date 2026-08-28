@@ -16,7 +16,7 @@ COPY package.json ./
 COPY src ./src
 COPY sql ./sql
 
-RUN mkdir -p uploads
+RUN mkdir -p uploads uploads/thumbs
 
 EXPOSE 4000
 

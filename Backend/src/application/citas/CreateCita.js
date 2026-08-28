@@ -1,11 +1,18 @@
 const notifyPartner = require('./notifyPartner');
 const { citasVersionKey } = require('../shared/cacheKeys');
 
-function makeCreateCita({ citaRepository, unitOfWork, fileStorage, userRepository, notificationPort, cachePort }) {
+function makeCreateCita({ citaRepository, unitOfWork, fileStorage, thumbnailService, userRepository, notificationPort, cachePort }) {
   async function execute({ parejaId, userId, userName, data, files }) {
     let createdCitaId;
+    const thumbUrls = [];
 
     try {
+      // Generar thumbnails antes de la transacción (I/O pesado fuera del tx)
+      for (const file of (files || [])) {
+        const thumbUrl = await thumbnailService.generate(file.filename);
+        thumbUrls.push(thumbUrl);
+      }
+
       const created = await unitOfWork.withTransaction(async (repos) => {
         const cita = await repos.citaRepository.create({
           parejaId,
@@ -23,12 +30,14 @@ function makeCreateCita({ citaRepository, unitOfWork, fileStorage, userRepositor
           comoTeSentiste: data.comoTeSentiste,
           loQueMasGusto: data.loQueMasGusto,
           loQueMenosGusto: data.loQueMenosGusto,
+          intimidad: data.intimidad,
         });
 
         for (const [i, file] of (files || []).entries()) {
           await repos.citaRepository.addPhoto({
             entryId,
             fotoUrl: fileStorage.buildUrl(file.filename),
+            thumbUrl: thumbUrls[i] || null,
             orden: i,
           });
         }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ImagePlus, PenLine, Trash2 } from 'lucide-react';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ArrowLeft, Bell, ImagePlus, PenLine, Pencil, Trash2 } from 'lucide-react';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
@@ -55,12 +55,27 @@ export default function CitaDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  function handleBack() {
+    // location.key es 'default' cuando esta es la primera entrada del historial
+    // de la SPA (enlace directo, notificación, correo o recarga): en ese caso
+    // navigate(-1) sacaría al usuario fuera de la app, así que vamos al inicio.
+    if (location.key === 'default') {
+      navigate('/');
+    } else {
+      navigate(-1);
+    }
+  }
+
   const [cita, setCita] = useState(null);
   const [error, setError] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [nudging, setNudging] = useState(false);
+  const [nudgeMsg, setNudgeMsg] = useState('');
 
   useEffect(() => {
     client
@@ -110,6 +125,19 @@ export default function CitaDetailPage() {
     }
   }
 
+  async function handleNudge() {
+    setNudging(true);
+    setNudgeMsg('');
+    try {
+      await client.post(`/citas/${id}/nudge`);
+      setNudgeMsg('✅ ¡Recordatorio enviado! Tu pareja recibirá un correo.');
+    } catch (err) {
+      setNudgeMsg(err.response?.data?.error || 'No se pudo enviar el recordatorio');
+    } finally {
+      setNudging(false);
+    }
+  }
+
   if (error) {
     return (
       <Layout>
@@ -141,18 +169,28 @@ export default function CitaDetailPage() {
   return (
     <Layout>
       {/* ---------- Barra de acciones ---------- */}
-      <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between">
-        <Link to="/" className="btn btn-ghost btn-sm">
+      <div className="mb-8 flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="btn btn-ghost btn-sm self-start"
+        >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
           Volver
-        </Link>
+        </button>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          {user.role === 'ADMIN' && (
+            <Link to={`/citas/${cita.id}/editar`} className="btn btn-ghost btn-sm">
+              <Pencil className="h-4 w-4" strokeWidth={1.75} />
+              Editar cita
+            </Link>
+          )}
           <Link to={`/citas/${cita.id}/mi-entrada`} className="btn btn-secondary btn-sm">
             <PenLine className="h-4 w-4" strokeWidth={1.75} />
             {myEntry ? 'Editar mi versión' : 'Agregar mi versión'}
           </Link>
-          {!bothTold && (
+          {user.role === 'ADMIN' && (
             <button onClick={handleDelete} className="btn btn-danger btn-sm">
               <Trash2 className="h-4 w-4" strokeWidth={1.75} />
               Borrar cita
@@ -227,6 +265,29 @@ export default function CitaDetailPage() {
           <p className="text-sm text-ink">
             Nadie ha contado su versión de esta cita todavía.
           </p>
+        </div>
+      )}
+
+      {/* Botón de recordatorio cuando falta la versión de la pareja */}
+      {myEntry && !bothTold && (
+        <div className="mx-auto mb-8 max-w-md surface surface-accent rounded-2xl px-5 py-4 text-center">
+          <p className="text-sm text-ink mb-3">
+            Tu pareja aún no ha escrito su versión de esta cita.
+          </p>
+          <button
+            type="button"
+            onClick={handleNudge}
+            disabled={nudging}
+            className="btn btn-secondary btn-sm inline-flex items-center gap-2"
+          >
+            <Bell className="h-4 w-4" strokeWidth={1.75} />
+            {nudging ? 'Enviando...' : 'Recordar a mi pareja 💌'}
+          </button>
+          {nudgeMsg && (
+            <p className={`mt-3 text-xs ${nudgeMsg.startsWith('✅') ? 'text-green-600' : 'text-red-400'}`}>
+              {nudgeMsg}
+            </p>
+          )}
         </div>
       )}
 

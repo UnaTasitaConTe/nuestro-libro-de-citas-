@@ -7,7 +7,7 @@ const { citasVersionKey } = require('../shared/cacheKeys');
 // orden original de validaciones es: 1) existe la cita (404) 2) valida el body (400).
 // Validar en el router antes de invocar el caso de uso cambiaría el status code en el
 // caso borde "cita no existe + body inválido".
-function makeUpsertMiEntrada({ citaRepository, fileStorage, userRepository, notificationPort, entryBodySchema, cachePort }) {
+function makeUpsertMiEntrada({ citaRepository, fileStorage, thumbnailService, userRepository, notificationPort, entryBodySchema, cachePort }) {
   async function execute({ citaId, parejaId, userId, userName, rawBody, files }) {
     const citaRow = await citaRepository.findByIdAndPareja(citaId, parejaId);
     if (!citaRow) {
@@ -28,9 +28,11 @@ function makeUpsertMiEntrada({ citaRepository, fileStorage, userRepository, noti
       const maxOrden = await citaRepository.getMaxOrden(entryId);
       let orden = CitaEntry.nextOrden(maxOrden);
       for (const file of files) {
+        const thumbUrl = await thumbnailService.generate(file.filename);
         await citaRepository.addPhoto({
           entryId,
           fotoUrl: fileStorage.buildUrl(file.filename),
+          thumbUrl,
           orden: orden++,
         });
       }

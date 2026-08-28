@@ -3,6 +3,8 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   BookHeart,
   KanbanSquare,
+  CalendarDays,
+  Images,
   Mail,
   LogOut,
   ChevronLeft,
@@ -15,6 +17,8 @@ import DragonIcon from './DragonIcon';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Nuestras citas', Icon: BookHeart, end: true },
+  { to: '/calendario', label: 'Calendario', Icon: CalendarDays },
+  { to: '/galeria', label: 'Galería', Icon: Images },
   { to: '/backlog', label: 'Backlog', Icon: KanbanSquare },
   { to: '/pareja', label: 'Invitar', Icon: Mail },
 ];
