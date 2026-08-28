@@ -113,9 +113,10 @@ class InMemoryCitaRepository {
     });
   }
 
-  async updateFields(citaId, parejaId, { fecha, lugar, repetiriamos }) {
+  async updateFields(citaId, parejaId, { nombre, fecha, lugar, repetiriamos }) {
     const cita = await this.findByIdAndPareja(citaId, parejaId);
     if (!cita) return false;
+    if (nombre != null) cita.nombre = nombre;
     if (fecha != null) cita.fecha = fecha;
     if (lugar != null) cita.lugar = lugar;
     if (repetiriamos != null) cita.repetiriamos = repetiriamos;

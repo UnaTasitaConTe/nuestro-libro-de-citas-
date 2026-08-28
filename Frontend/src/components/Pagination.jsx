@@ -4,13 +4,16 @@ export default function Pagination({ page, totalPages, onChange }) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-4">
+    <nav
+      aria-label="Paginación"
+      className="mt-10 flex flex-wrap items-center justify-center gap-2"
+    >
       <button
         type="button"
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
         aria-label="Página anterior"
-        className="w-9 h-9 rounded-full border border-line text-ink flex items-center justify-center hover:border-ink-dark hover:text-ink-dark transition-colors disabled:opacity-30 disabled:pointer-events-none"
+        className="icon-btn"
       >
         ‹
       </button>
@@ -22,11 +25,11 @@ export default function Pagination({ page, totalPages, onChange }) {
           onClick={() => onChange(p)}
           aria-label={`Ir a la página ${p}`}
           aria-current={p === page ? 'page' : undefined}
-          className={`w-9 h-9 rounded-full text-sm font-display font-semibold transition-all ${
+          className={
             p === page
-              ? 'bg-gradient-to-r from-ink-dark to-amber-400 text-paper shadow-[0_4px_16px_rgba(255,204,51,0.4)]'
-              : 'text-ink border border-line hover:border-ink-dark hover:text-ink-dark'
-          }`}
+              ? 'grid h-9 w-9 place-items-center rounded-full bg-linear-to-r from-ink-dark to-amber-300 font-display text-sm font-semibold text-[#1a1300] shadow-[0_8px_24px_-8px_rgba(255,204,51,0.7)]'
+              : 'icon-btn font-display text-sm'
+          }
         >
           {p}
         </button>
@@ -37,10 +40,10 @@ export default function Pagination({ page, totalPages, onChange }) {
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}
         aria-label="Página siguiente"
-        className="w-9 h-9 rounded-full border border-line text-ink flex items-center justify-center hover:border-ink-dark hover:text-ink-dark transition-colors disabled:opacity-30 disabled:pointer-events-none"
+        className="icon-btn"
       >
         ›
       </button>
-    </div>
+    </nav>
   );
 }

@@ -36,7 +36,7 @@ describe('RegisterUser', () => {
       name: 'Ana',
     });
 
-    expect(result.user).toEqual({ id: 1, email: 'a@test.com', name: 'Ana' });
+    expect(result.user).toEqual({ id: 1, email: 'a@test.com', name: 'Ana', role: 'MEMBER' });
     expect(await parejaRepository.findById(1)).not.toBeNull();
     expect(await userRepository.countByPareja(1)).toBe(1);
     expect(sessionPort.sessions.size).toBe(1);

@@ -114,11 +114,12 @@ class PgCitaRepository {
     comoTeSentiste,
     loQueMasGusto,
     loQueMenosGusto,
+    intimidad,
   }) {
     const { rows } = await this.db.query(
       `INSERT INTO cita_entries
-        (cita_id, user_id, valoracion, que_hicimos, como_te_sentiste, lo_que_mas_gusto, lo_que_menos_gusto)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (cita_id, user_id, valoracion, que_hicimos, como_te_sentiste, lo_que_mas_gusto, lo_que_menos_gusto, intimidad)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
       [
         citaId,
@@ -128,27 +129,29 @@ class PgCitaRepository {
         comoTeSentiste ?? null,
         loQueMasGusto ?? null,
         loQueMenosGusto ?? null,
+        intimidad ?? false,
       ]
     );
     return rows[0];
   }
 
-  async addPhoto({ entryId, fotoUrl, orden }) {
+  async addPhoto({ entryId, fotoUrl, thumbUrl, orden }) {
     await this.db.query(
-      'INSERT INTO entry_photos (entry_id, foto_url, orden) VALUES ($1, $2, $3)',
-      [entryId, fotoUrl, orden]
+      'INSERT INTO entry_photos (entry_id, foto_url, thumb_url, orden) VALUES ($1, $2, $3, $4)',
+      [entryId, fotoUrl, thumbUrl || null, orden]
     );
   }
 
-  async updateFields(citaId, parejaId, { fecha, lugar, repetiriamos }) {
+  async updateFields(citaId, parejaId, { nombre, fecha, lugar, repetiriamos }) {
     const { rows } = await this.db.query(
       `UPDATE citas SET
-         fecha = COALESCE($1, fecha),
-         lugar = COALESCE($2, lugar),
-         repetiriamos = COALESCE($3, repetiriamos)
-       WHERE id = $4 AND pareja_id = $5
+         nombre = COALESCE($1, nombre),
+         fecha = COALESCE($2, fecha),
+         lugar = COALESCE($3, lugar),
+         repetiriamos = COALESCE($4, repetiriamos)
+       WHERE id = $5 AND pareja_id = $6
        RETURNING id`,
-      [fecha ?? null, lugar ?? null, repetiriamos ?? null, citaId, parejaId]
+      [nombre ?? null, fecha ?? null, lugar ?? null, repetiriamos ?? null, citaId, parejaId]
     );
     return Boolean(rows[0]);
   }
@@ -161,17 +164,19 @@ class PgCitaRepository {
     comoTeSentiste,
     loQueMasGusto,
     loQueMenosGusto,
+    intimidad,
   }) {
     const { rows } = await this.db.query(
       `INSERT INTO cita_entries
-        (cita_id, user_id, valoracion, que_hicimos, como_te_sentiste, lo_que_mas_gusto, lo_que_menos_gusto)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (cita_id, user_id, valoracion, que_hicimos, como_te_sentiste, lo_que_mas_gusto, lo_que_menos_gusto, intimidad)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (cita_id, user_id) DO UPDATE SET
          valoracion = EXCLUDED.valoracion,
          que_hicimos = EXCLUDED.que_hicimos,
          como_te_sentiste = EXCLUDED.como_te_sentiste,
          lo_que_mas_gusto = EXCLUDED.lo_que_mas_gusto,
          lo_que_menos_gusto = EXCLUDED.lo_que_menos_gusto,
+         intimidad = EXCLUDED.intimidad,
          updated_at = now()
        RETURNING id`,
       [
@@ -182,6 +187,7 @@ class PgCitaRepository {
         comoTeSentiste ?? null,
         loQueMasGusto ?? null,
         loQueMenosGusto ?? null,
+        intimidad ?? false,
       ]
     );
     return rows[0];
@@ -234,6 +240,49 @@ class PgCitaRepository {
       citaId,
       parejaId,
     ]);
+  }
+
+  async findByMonth(parejaId, year, month) {
+    const { rows } = await this.db.query(
+      `SELECT c.id, c.nombre, c.fecha, c.lugar, c.repetiriamos,
+              COALESCE(bool_or(e.intimidad), false) AS intimidad
+       FROM citas c
+       LEFT JOIN cita_entries e ON e.cita_id = c.id
+       WHERE c.pareja_id = $1
+         AND EXTRACT(YEAR FROM c.fecha) = $2
+         AND EXTRACT(MONTH FROM c.fecha) = $3
+       GROUP BY c.id
+       ORDER BY c.fecha`,
+      [parejaId, year, month]
+    );
+    return rows;
+  }
+
+  async countPhotosByPareja(parejaId) {
+    const { rows } = await this.db.query(
+      `SELECT count(*)::int AS total
+       FROM entry_photos p
+       JOIN cita_entries e ON e.id = p.entry_id
+       JOIN citas c ON c.id = e.cita_id
+       WHERE c.pareja_id = $1`,
+      [parejaId]
+    );
+    return rows[0].total;
+  }
+
+  async findPhotosByPareja(parejaId, { limit, offset }) {
+    const { rows } = await this.db.query(
+      `SELECT p.id, p.foto_url, p.thumb_url, p.created_at AS photo_date,
+              c.id AS cita_id, c.nombre AS cita_nombre, c.fecha AS cita_fecha
+       FROM entry_photos p
+       JOIN cita_entries e ON e.id = p.entry_id
+       JOIN citas c ON c.id = e.cita_id
+       WHERE c.pareja_id = $1
+       ORDER BY c.fecha DESC, p.orden, p.id
+       LIMIT $2 OFFSET $3`,
+      [parejaId, limit, offset]
+    );
+    return rows;
   }
 }
 

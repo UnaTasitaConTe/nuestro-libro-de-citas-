@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Trash2 } from 'lucide-react';
 
 export default function BacklogCard({ idea, onSave, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -29,29 +30,29 @@ export default function BacklogCard({ idea, onSave, onDelete }) {
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-2xl border border-line bg-card p-3 shadow-sm hover:shadow-md transition-shadow"
+      className="group surface card-hover p-3.5"
     >
       <div className="flex items-start gap-2">
         <button
           type="button"
           aria-label="Arrastrar tarjeta"
-          className="mt-0.5 cursor-grab active:cursor-grabbing text-ink/60 touch-none"
+          className="mt-0.5 shrink-0 cursor-grab touch-none text-ink/40 transition-colors hover:text-ink-dark active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
-          ⠿
+          <GripVertical className="h-4 w-4" strokeWidth={1.75} />
         </button>
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {editing ? (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <input
                 autoFocus
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 onBlur={save}
                 onKeyDown={(e) => e.key === 'Enter' && save()}
-                className="w-full bg-transparent border-b border-line text-ink-dark font-hand text-lg focus:outline-none"
+                className="w-full border-b border-line bg-transparent pb-1 font-hand text-xl text-ink-dark outline-none focus:border-ink-dark"
               />
               <textarea
                 value={descripcion}
@@ -59,14 +60,16 @@ export default function BacklogCard({ idea, onSave, onDelete }) {
                 onBlur={save}
                 placeholder="Descripción (opcional)"
                 rows={2}
-                className="w-full bg-transparent border-b border-line text-ink text-xs focus:outline-none resize-none"
+                className="w-full resize-none border-b border-line bg-transparent pb-1 text-xs text-ink outline-none focus:border-ink-dark"
               />
             </div>
           ) : (
             <div onClick={() => setEditing(true)} className="cursor-text">
-              <p className="font-hand text-lg text-ink-dark leading-tight">{idea.titulo}</p>
+              <p className="font-hand text-xl leading-tight text-ink-dark">{idea.titulo}</p>
               {idea.descripcion && (
-                <p className="text-ink/60 text-xs mt-1 whitespace-pre-wrap">{idea.descripcion}</p>
+                <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-ink/70">
+                  {idea.descripcion}
+                </p>
               )}
             </div>
           )}
@@ -76,9 +79,9 @@ export default function BacklogCard({ idea, onSave, onDelete }) {
           type="button"
           onClick={() => onDelete(idea.id)}
           aria-label="Borrar idea"
-          className="text-ink/60 hover:text-red-400 transition-colors text-sm"
+          className="shrink-0 rounded-lg p-1 text-ink/40 opacity-0 transition-all hover:bg-danger/10 hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
         >
-          ×
+          <Trash2 className="h-4 w-4" strokeWidth={1.75} />
         </button>
       </div>
     </div>

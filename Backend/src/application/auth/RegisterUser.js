@@ -37,6 +37,7 @@ function makeRegisterUser({ userRepository, unitOfWork, passwordHasher, tokenSer
       email: user.email,
       name: user.name,
       parejaId: user.pareja_id,
+      role: user.role,
       jti,
     });
     await sessionPort.create(jti, { userId: user.id }, sessionTtlSeconds);

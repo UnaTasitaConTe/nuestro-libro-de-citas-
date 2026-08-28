@@ -39,6 +39,7 @@ function makeJoinPareja({
       email: user.email,
       name: user.name,
       parejaId: targetPareja.id,
+      role: user.role,
       jti,
     });
     await sessionPort.create(jti, { userId: user.id }, sessionTtlSeconds);

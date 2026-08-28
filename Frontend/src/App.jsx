@@ -6,9 +6,12 @@ import RegisterPage from './pages/RegisterPage';
 import CitasListPage from './pages/CitasListPage';
 import CitaDetailPage from './pages/CitaDetailPage';
 import CitaFormPage from './pages/CitaFormPage';
+import CitaEditPage from './pages/CitaEditPage';
 import EntryFormPage from './pages/EntryFormPage';
 import ParejaPage from './pages/ParejaPage';
 import BacklogPage from './pages/BacklogPage';
+import CalendarioPage from './pages/CalendarioPage';
+import GaleriaPage from './pages/GaleriaPage';
 
 export default function App() {
   return (
@@ -42,6 +45,14 @@ export default function App() {
           }
         />
         <Route
+          path="/citas/:id/editar"
+          element={
+            <ProtectedRoute>
+              <CitaEditPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/citas/:id/mi-entrada"
           element={
             <ProtectedRoute>
@@ -62,6 +73,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <BacklogPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendario"
+          element={
+            <ProtectedRoute>
+              <CalendarioPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/galeria"
+          element={
+            <ProtectedRoute>
+              <GaleriaPage />
             </ProtectedRoute>
           }
         />

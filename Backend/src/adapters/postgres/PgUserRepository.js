@@ -5,7 +5,7 @@ class PgUserRepository {
 
   async findByEmail(email) {
     const { rows } = await this.db.query(
-      'SELECT id, pareja_id, email, name, password_hash FROM users WHERE email = $1',
+      'SELECT id, pareja_id, email, name, password_hash, role FROM users WHERE email = $1',
       [email]
     );
     return rows[0] || null;
@@ -13,7 +13,7 @@ class PgUserRepository {
 
   async create({ parejaId, email, passwordHash, name }) {
     const { rows } = await this.db.query(
-      'INSERT INTO users (pareja_id, email, password_hash, name) VALUES ($1, $2, $3, $4) RETURNING id, pareja_id, email, name',
+      'INSERT INTO users (pareja_id, email, password_hash, name) VALUES ($1, $2, $3, $4) RETURNING id, pareja_id, email, name, role',
       [parejaId, email, passwordHash, name]
     );
     return rows[0];
@@ -41,6 +41,14 @@ class PgUserRepository {
       [parejaId, excludeUserId]
     );
     return rows[0] ? rows[0].email : null;
+  }
+
+  async findPartnerIdByPareja(parejaId, excludeUserId) {
+    const { rows } = await this.db.query(
+      'SELECT id FROM users WHERE pareja_id = $1 AND id != $2',
+      [parejaId, excludeUserId]
+    );
+    return rows[0] ? rows[0].id : null;
   }
 
   async updateParejaId(userId, parejaId) {

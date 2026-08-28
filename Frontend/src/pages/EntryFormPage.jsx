@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import EntryFields from '../components/EntryFields';
 import { REPETIRIAMOS_LABEL } from '../constants/repetiriamos';
 import { formatFecha } from '../utils/date';
@@ -13,6 +14,7 @@ const emptyEntry = {
   comoTeSentiste: '',
   loQueMasGusto: '',
   loQueMenosGusto: '',
+  intimidad: false,
 };
 
 export default function EntryFormPage() {
@@ -38,6 +40,7 @@ export default function EntryFormPage() {
           comoTeSentiste: mine.como_te_sentiste || '',
           loQueMasGusto: mine.lo_que_mas_gusto || '',
           loQueMenosGusto: mine.lo_que_menos_gusto || '',
+          intimidad: mine.intimidad || false,
         });
         setExistingPhotos(mine.photos || []);
       }
@@ -73,6 +76,7 @@ export default function EntryFormPage() {
       body.append('comoTeSentiste', entry.comoTeSentiste);
       body.append('loQueMasGusto', entry.loQueMasGusto);
       body.append('loQueMenosGusto', entry.loQueMenosGusto);
+      body.append('intimidad', entry.intimidad);
       fotos.forEach((f) => body.append('fotos', f));
 
       await client.put(`/citas/${id}/mi-entrada`, body);
@@ -87,7 +91,10 @@ export default function EntryFormPage() {
   if (!cita) {
     return (
       <Layout>
-        <p className="text-ink">Cargando...</p>
+        <div className="space-y-4">
+          <div className="skeleton h-24 rounded-3xl" />
+          <div className="skeleton h-72 rounded-3xl" />
+        </div>
       </Layout>
     );
   }
@@ -96,15 +103,16 @@ export default function EntryFormPage() {
 
   return (
     <Layout>
-      <h2 className="font-display text-xl sm:text-2xl mb-2 text-ink-dark">Mi versión de la cita 💛</h2>
-      <div className="text-sm text-ink mb-6 rounded-xl bg-card/60 border border-line px-4 py-3">
-        <p className="text-ink-dark font-display mb-1">{cita.nombre}</p>
-        <p>
+      <PageHeader eyebrow="Tu voz" title="Mi versión de la cita 💛" />
+
+      <div className="surface surface-accent mb-6 px-5 py-4">
+        <p className="font-display text-lg font-semibold text-ink-strong">{cita.nombre}</p>
+        <p className="mt-1 text-sm text-ink">
           {fecha} · {cita.lugar} · {REPETIRIAMOS_LABEL[cita.repetiriamos]}
         </p>
       </div>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      {error && <p className="alert alert-danger mb-6">{error}</p>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <EntryFields
@@ -116,12 +124,8 @@ export default function EntryFormPage() {
           onRemoveExisting={handleRemoveExisting}
         />
 
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-full bg-gradient-to-r from-ink-dark to-amber-400 text-paper font-display font-semibold px-8 py-2.5 shadow-[0_4px_20px_rgba(255,204,51,0.35)] hover:shadow-[0_4px_28px_rgba(255,204,51,0.5)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all"
-          >
+        <div className="form-actions">
+          <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
             {loading ? 'Guardando...' : 'Guardar mi versión'}
           </button>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ArrowLeft, Bell, ImagePlus, PenLine, Pencil, Trash2 } from 'lucide-react';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
@@ -11,38 +12,42 @@ import { formatFecha } from '../utils/date';
 
 const ENTRY_TILTS = [-1.5, 1.5];
 
+const ENTRY_SECTIONS = [
+  { key: 'que_hicimos', label: 'Qué hicimos' },
+  { key: 'como_te_sentiste', label: 'Cómo me sentí' },
+  { key: 'lo_que_mas_gusto', label: 'Lo que más me gustó' },
+  { key: 'lo_que_menos_gusto', label: 'Lo que menos me gustó' },
+];
+
 function EntryView({ entry, delay, index }) {
   return (
-    <div
-      className="polaroid-tilt fade-in-up relative bg-polaroid border border-ink-dark/30 rounded-sm p-5 sm:p-6 shadow-[0_14px_34px_rgba(0,0,0,0.45)] hover:shadow-[0_20px_40px_rgba(255,204,51,0.2)]"
-      style={{ animationDelay: `${delay}s`, '--tilt': `${ENTRY_TILTS[index % ENTRY_TILTS.length]}deg` }}
+    <article
+      className="polaroid-tilt fade-in-up relative rounded-md border border-ink-dark/30 bg-polaroid p-5 shadow-[0_16px_38px_rgba(3,6,20,0.6)] hover:shadow-[0_26px_52px_-16px_rgba(255,204,51,0.35)] sm:p-6"
+      style={{
+        animationDelay: `${delay}s`,
+        '--tilt': `${ENTRY_TILTS[index % ENTRY_TILTS.length]}deg`,
+      }}
     >
       <span className="washi-tape" aria-hidden="true" />
 
-      <p className="font-hand text-3xl leading-none text-center text-polaroid-ink mb-4">{entry.user_name}</p>
+      <p className="mb-4 text-center font-hand text-3xl leading-none text-polaroid-ink">
+        {entry.user_name}
+      </p>
 
-      <p className="uppercase text-xs tracking-widest font-semibold text-royal-light mb-1">Valoración</p>
+      <p className="eyebrow mb-1.5">Valoración</p>
       <HeartRating value={entry.valoracion} readOnly />
 
-      <div className="grid gap-4 pt-4 mt-4 border-t border-ink-dark/20">
-        <div>
-          <p className="uppercase text-xs tracking-widest font-semibold text-royal-light mb-1">Qué hicimos</p>
-          <p className="whitespace-pre-wrap text-sm text-[#e9ecfb]">{entry.que_hicimos || '—'}</p>
-        </div>
-        <div>
-          <p className="uppercase text-xs tracking-widest font-semibold text-royal-light mb-1">Cómo me sentí</p>
-          <p className="whitespace-pre-wrap text-sm text-[#e9ecfb]">{entry.como_te_sentiste || '—'}</p>
-        </div>
-        <div>
-          <p className="uppercase text-xs tracking-widest font-semibold text-royal-light mb-1">Lo que más me gustó</p>
-          <p className="whitespace-pre-wrap text-sm text-[#e9ecfb]">{entry.lo_que_mas_gusto || '—'}</p>
-        </div>
-        <div>
-          <p className="uppercase text-xs tracking-widest font-semibold text-royal-light mb-1">Lo que menos me gustó</p>
-          <p className="whitespace-pre-wrap text-sm text-[#e9ecfb]">{entry.lo_que_menos_gusto || '—'}</p>
-        </div>
+      <div className="mt-5 grid gap-4 border-t border-ink-dark/20 pt-5">
+        {ENTRY_SECTIONS.map(({ key, label }) => (
+          <div key={key}>
+            <p className="eyebrow mb-1">{label}</p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-polaroid-ink">
+              {entry[key] || '—'}
+            </p>
+          </div>
+        ))}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -50,12 +55,27 @@ export default function CitaDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  function handleBack() {
+    // location.key es 'default' cuando esta es la primera entrada del historial
+    // de la SPA (enlace directo, notificación, correo o recarga): en ese caso
+    // navigate(-1) sacaría al usuario fuera de la app, así que vamos al inicio.
+    if (location.key === 'default') {
+      navigate('/');
+    } else {
+      navigate(-1);
+    }
+  }
+
   const [cita, setCita] = useState(null);
   const [error, setError] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [nudging, setNudging] = useState(false);
+  const [nudgeMsg, setNudgeMsg] = useState('');
 
   useEffect(() => {
     client
@@ -105,10 +125,23 @@ export default function CitaDetailPage() {
     }
   }
 
+  async function handleNudge() {
+    setNudging(true);
+    setNudgeMsg('');
+    try {
+      await client.post(`/citas/${id}/nudge`);
+      setNudgeMsg('✅ ¡Recordatorio enviado! Tu pareja recibirá un correo.');
+    } catch (err) {
+      setNudgeMsg(err.response?.data?.error || 'No se pudo enviar el recordatorio');
+    } finally {
+      setNudging(false);
+    }
+  }
+
   if (error) {
     return (
       <Layout>
-        <p className="text-red-400">{error}</p>
+        <p className="alert alert-danger">{error}</p>
       </Layout>
     );
   }
@@ -116,7 +149,10 @@ export default function CitaDetailPage() {
   if (!cita) {
     return (
       <Layout>
-        <p className="text-ink">Cargando...</p>
+        <div className="mx-auto max-w-xl space-y-4">
+          <div className="skeleton h-40 rounded-3xl" />
+          <div className="skeleton h-64 rounded-3xl" />
+        </div>
       </Layout>
     );
   }
@@ -132,65 +168,82 @@ export default function CitaDetailPage() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between mb-8">
-        <Link to="/" className="text-sm rounded-full border border-line px-3 py-1 hover:border-ink-dark hover:text-ink-dark transition-colors">
-          ← volver
-        </Link>
-        <div className="flex gap-3 text-sm">
-          <Link
-            to={`/citas/${cita.id}/mi-entrada`}
-            className="rounded-full border border-royal-light/40 text-royal-light px-3 py-1 hover:bg-royal-light/10 transition-colors"
-          >
-            {myEntry ? 'editar mi versión' : 'agregar mi versión'}
+      {/* ---------- Barra de acciones ---------- */}
+      <div className="mb-8 flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="btn btn-ghost btn-sm self-start"
+        >
+          <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+          Volver
+        </button>
+
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          {user.role === 'ADMIN' && (
+            <Link to={`/citas/${cita.id}/editar`} className="btn btn-ghost btn-sm">
+              <Pencil className="h-4 w-4" strokeWidth={1.75} />
+              Editar cita
+            </Link>
+          )}
+          <Link to={`/citas/${cita.id}/mi-entrada`} className="btn btn-secondary btn-sm">
+            <PenLine className="h-4 w-4" strokeWidth={1.75} />
+            {myEntry ? 'Editar mi versión' : 'Agregar mi versión'}
           </Link>
-          {!bothTold && (
-            <button
-              onClick={handleDelete}
-              className="rounded-full border border-red-400/40 text-red-400 px-3 py-1 hover:bg-red-400/10 transition-colors"
-            >
-              borrar cita
+          {user.role === 'ADMIN' && (
+            <button onClick={handleDelete} className="btn btn-danger btn-sm">
+              <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+              Borrar cita
             </button>
           )}
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto rounded-3xl bg-card/90 backdrop-blur-md border border-line px-6 py-8 sm:px-10 mb-8 shadow-[0_14px_36px_rgba(0,0,0,0.45)]">
-        <h2 className="font-display text-2xl sm:text-3xl text-center mb-2 text-ink-dark drop-shadow-[0_0_10px_rgba(255,204,51,0.35)]">
-          {cita.nombre}
+      {/* ---------- Hero de la cita ---------- */}
+      <section className="surface-glass surface-accent fade-in-up mx-auto mb-10 max-w-xl px-6 py-8 text-center sm:px-10">
+        <p className="eyebrow">{fecha}</p>
+
+        <h2 className="mt-2 font-display text-3xl font-bold leading-tight text-ink-strong sm:text-4xl">
+          <span className="title-gold">{cita.nombre}</span>
         </h2>
-        <p className="text-center text-[#e9ecfb] mb-1">
-          {fecha} · {cita.lugar}
-        </p>
-        <p className="text-center text-[#e9ecfb]/85 text-sm mb-3">
-          ¿Repetiríamos?{' '}
-          <span className="text-ink-dark font-semibold">{REPETIRIAMOS_LABEL[cita.repetiriamos]}</span>
-        </p>
+
+        <p className="mt-2 text-sm text-ink">{cita.lugar}</p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <span className="chip">
+            ¿Repetiríamos?
+            <strong className="text-ink-dark">{REPETIRIAMOS_LABEL[cita.repetiriamos]}</strong>
+          </span>
+          {promedio > 0 && (
+            <span className="chip chip-gold">Promedio {promedio.toFixed(1)}</span>
+          )}
+        </div>
 
         {promedio > 0 && (
-          <div className="flex items-center justify-center gap-2">
+          <div className="mt-4 flex justify-center">
             <HeartRating value={Math.round(promedio)} readOnly />
-            <span className="text-sm text-[#e9ecfb]/85">promedio: {promedio.toFixed(1)}</span>
           </div>
         )}
 
         {bothTold && (
-          <p className="text-center text-xs text-ink mt-3">
+          <p className="mt-4 text-xs text-ink/70">
             Ya no se puede borrar: las dos versiones fueron contadas 💛
           </p>
         )}
-        {deleteError && <p className="text-center text-red-400 text-sm mt-3">{deleteError}</p>}
-      </div>
+        {deleteError && <p className="alert alert-danger mt-4">{deleteError}</p>}
+      </section>
 
-      <div className="max-w-lg mx-auto mb-1">
+      {/* ---------- Fotos ---------- */}
+      <div className="mx-auto mb-2 max-w-lg">
         <Carousel photos={allPhotos} alt={cita.nombre} onDelete={handleDeletePhoto} />
       </div>
-      {photoError && <p className="text-center text-red-400 text-sm mb-3">{photoError}</p>}
-      <div className="mb-3" />
+      {photoError && <p className="alert alert-danger mx-auto max-w-md">{photoError}</p>}
 
-      {myEntry && (
-        <div className="flex flex-col items-center mb-10">
-          <label className="cursor-pointer text-sm rounded-full border border-royal-light/40 text-royal-light px-4 py-1.5 hover:bg-royal-light/10 transition-colors">
-            {uploading ? 'Subiendo...' : '+ agregar fotos'}
+      {myEntry ? (
+        <div className="mb-12 mt-4 flex flex-col items-center">
+          <label className="btn btn-secondary btn-sm cursor-pointer">
+            <ImagePlus className="h-4 w-4" strokeWidth={1.75} />
+            {uploading ? 'Subiendo...' : 'Agregar fotos'}
             <input
               type="file"
               accept="image/*"
@@ -200,16 +253,45 @@ export default function CitaDetailPage() {
               onChange={handleAddPhotos}
             />
           </label>
-          {uploadError && <p className="text-red-400 text-sm mt-2">{uploadError}</p>}
+          {uploadError && <p className="alert alert-danger mt-3">{uploadError}</p>}
+        </div>
+      ) : (
+        <div className="mb-12" />
+      )}
+
+      {/* ---------- Versiones ---------- */}
+      {cita.entries.length === 0 && (
+        <div className="surface mx-auto max-w-md border-dashed p-8 text-center">
+          <p className="text-sm text-ink">
+            Nadie ha contado su versión de esta cita todavía.
+          </p>
         </div>
       )}
-      {!myEntry && <div className="mb-10" />}
 
-      {cita.entries.length === 0 && (
-        <p className="text-ink text-center">Nadie ha contado su versión de esta cita todavía.</p>
+      {/* Botón de recordatorio cuando falta la versión de la pareja */}
+      {myEntry && !bothTold && (
+        <div className="mx-auto mb-8 max-w-md surface surface-accent rounded-2xl px-5 py-4 text-center">
+          <p className="text-sm text-ink mb-3">
+            Tu pareja aún no ha escrito su versión de esta cita.
+          </p>
+          <button
+            type="button"
+            onClick={handleNudge}
+            disabled={nudging}
+            className="btn btn-secondary btn-sm inline-flex items-center gap-2"
+          >
+            <Bell className="h-4 w-4" strokeWidth={1.75} />
+            {nudging ? 'Enviando...' : 'Recordar a mi pareja 💌'}
+          </button>
+          {nudgeMsg && (
+            <p className={`mt-3 text-xs ${nudgeMsg.startsWith('✅') ? 'text-green-600' : 'text-red-400'}`}>
+              {nudgeMsg}
+            </p>
+          )}
+        </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-x-10 gap-y-16 px-2 max-w-3xl mx-auto">
+      <div className="mx-auto grid max-w-3xl gap-x-10 gap-y-16 px-2 md:grid-cols-2">
         {cita.entries.map((entry, i) => (
           <EntryView key={entry.id} entry={entry} delay={i * 0.12} index={i} />
         ))}

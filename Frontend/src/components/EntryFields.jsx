@@ -1,4 +1,5 @@
 import HeartRating from './HeartRating';
+import { Flame } from 'lucide-react';
 
 export const textareaClass =
   'w-full rounded-xl border border-line bg-card/60 p-3 outline-none focus:border-ink-dark focus:ring-2 focus:ring-ink-dark/30 transition';
@@ -129,6 +130,27 @@ export default function EntryFields({
           onChange={(e) => update('loQueMenosGusto', e.target.value)}
           className={textareaClass}
         />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="flex items-center gap-3 cursor-pointer select-none group">
+          <span className={`flex h-6 w-6 items-center justify-center rounded-lg border transition ${
+            entry.intimidad
+              ? 'border-rose-400 bg-rose-400/15'
+              : 'border-line bg-card/60'
+          }`}>
+            <Flame className={`h-3.5 w-3.5 text-rose-400 transition ${entry.intimidad ? 'opacity-100' : 'opacity-0'}`} strokeWidth={2} />
+          </span>
+          <input
+            type="checkbox"
+            checked={entry.intimidad || false}
+            onChange={(e) => update('intimidad', e.target.checked)}
+            className="sr-only"
+          />
+          <span className="text-sm text-ink group-hover:text-ink-strong transition-colors">
+            Hubo intimidad 🔥
+          </span>
+        </label>
       </div>
     </div>
   );

@@ -9,6 +9,8 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     logging: *default-logging
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-bookofdate}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bookofdate}
@@ -43,6 +45,7 @@ services:
           memory: 100M
 
   backend:
+    image: bookofdate-backend:latest
     build: ./Backend
     restart: unless-stopped
     logging: *default-logging
@@ -71,6 +74,7 @@ services:
           memory: 300M
 
   frontend:
+    image: bookofdate-frontend:latest
     build: ./Frontend
     restart: unless-stopped
     logging: *default-logging

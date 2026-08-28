@@ -9,6 +9,7 @@ import {
 } from '@dnd-kit/core';
 import client from '../api/client';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import BacklogColumn from '../components/BacklogColumn';
 import { IDEA_ESTADOS } from '../constants/ideaEstado';
 
@@ -33,7 +34,9 @@ export default function BacklogPage() {
       if (!token) return;
 
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${location.host}/api/ideas-citas/ws?token=${encodeURIComponent(token)}`);
+      const ws = new WebSocket(
+        `${protocol}//${location.host}/api/ideas-citas/ws?token=${encodeURIComponent(token)}`
+      );
       wsRef.current = ws;
 
       ws.onmessage = () => fetchIdeas({ silent: true });
@@ -129,27 +132,33 @@ export default function BacklogPage() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="font-display text-xl sm:text-2xl text-ink-dark">Backlog de citas</h2>
-      </div>
+      <PageHeader
+        eyebrow="Planes por vivir"
+        title="Backlog de citas"
+        subtitle="Arrastra las ideas entre columnas para organizar lo que viene."
+      />
 
-      <form onSubmit={handleCrear} className="flex gap-2 mb-6">
+      <form onSubmit={handleCrear} className="mb-8 flex flex-col gap-2 sm:flex-row">
         <input
           value={nuevoTitulo}
           onChange={(e) => setNuevoTitulo(e.target.value)}
           placeholder="Nueva idea de cita..."
-          className="flex-1 rounded-xl border border-line bg-card px-4 py-2 text-sm text-ink outline-none"
+          aria-label="Nueva idea de cita"
+          className="field flex-1"
         />
-        <button
-          type="submit"
-          className="rounded-full bg-gradient-to-r from-ink-dark to-amber-400 text-paper font-display font-semibold px-5 py-2 text-sm shadow-[0_4px_20px_rgba(255,204,51,0.35)] hover:shadow-[0_4px_28px_rgba(255,204,51,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all"
-        >
+        <button type="submit" disabled={!nuevoTitulo.trim()} className="btn btn-primary">
           + Agregar
         </button>
       </form>
 
-      {loading && <p className="text-ink">Cargando...</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {loading && (
+        <div className="grid gap-6 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="skeleton h-56 rounded-3xl" />
+          ))}
+        </div>
+      )}
+      {error && <p className="alert alert-danger">{error}</p>}
 
       {!loading && !error && (
         <DndContext
@@ -158,7 +167,7 @@ export default function BacklogPage() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex flex-col sm:flex-row gap-6">
+          <div className="flex flex-col gap-6 sm:flex-row">
             {IDEA_ESTADOS.map(({ key, label }) => (
               <BacklogColumn
                 key={key}
@@ -173,8 +182,8 @@ export default function BacklogPage() {
 
           <DragOverlay>
             {activeIdea && (
-              <div className="rounded-2xl border border-line bg-card p-3 shadow-lg rotate-2">
-                <p className="font-hand text-lg text-ink-dark leading-tight">{activeIdea.titulo}</p>
+              <div className="rotate-2 rounded-2xl border border-ink-dark/40 bg-card p-3 shadow-[0_20px_44px_-14px_rgba(3,6,20,0.85)]">
+                <p className="font-hand text-xl leading-tight text-ink-dark">{activeIdea.titulo}</p>
               </div>
             )}
           </DragOverlay>

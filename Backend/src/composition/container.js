@@ -9,6 +9,7 @@ const PgIdeaCitaRepository = require('../adapters/postgres/PgIdeaCitaRepository'
 const PgUnitOfWork = require('../adapters/postgres/PgUnitOfWork');
 const NodemailerNotificationAdapter = require('../adapters/email/NodemailerNotificationAdapter');
 const LocalFileStorageAdapter = require('../adapters/filesystem/LocalFileStorageAdapter');
+const ThumbnailService = require('../adapters/filesystem/ThumbnailService');
 const BcryptPasswordHasher = require('../adapters/security/BcryptPasswordHasher');
 const JwtTokenService = require('../adapters/security/JwtTokenService');
 const RedisCacheAdapter = require('../adapters/redis/RedisCacheAdapter');
@@ -23,6 +24,9 @@ const makeLogoutUser = require('../application/auth/LogoutUser');
 const makeGetPareja = require('../application/pareja/GetPareja');
 const makeJoinPareja = require('../application/pareja/JoinPareja');
 const makeListCitas = require('../application/citas/ListCitas');
+const makeListCitasByMonth = require('../application/citas/ListCitasByMonth');
+const makeListGallery = require('../application/citas/ListGallery');
+const makeNudgePartner = require('../application/citas/NudgePartner');
 const makeGetCita = require('../application/citas/GetCita');
 const makeUpdateCita = require('../application/citas/UpdateCita');
 const makeDeleteFoto = require('../application/citas/DeleteFoto');
@@ -47,6 +51,7 @@ function buildContainer() {
   const unitOfWork = new PgUnitOfWork(pool);
   const notificationPort = new NodemailerNotificationAdapter();
   const fileStorage = new LocalFileStorageAdapter({ rootDir: path.join(__dirname, '..', '..') });
+  const thumbnailService = new ThumbnailService({ rootDir: path.join(__dirname, '..', '..') });
   const passwordHasher = new BcryptPasswordHasher();
   const tokenService = new JwtTokenService({ secret: process.env.JWT_SECRET, expiresIn: '30d' });
 
@@ -87,6 +92,8 @@ function buildContainer() {
         sessionTtlSeconds: SESSION_TTL_SECONDS,
       }),
       listCitas: makeListCitas({ citaRepository, cachePort }),
+      listCitasByMonth: makeListCitasByMonth({ citaRepository, cachePort }),
+      listGallery: makeListGallery({ citaRepository, cachePort }),
       getCita: makeGetCita({ citaRepository }),
       updateCita: makeUpdateCita({ citaRepository, cachePort }),
       deleteFoto: makeDeleteFoto({ citaRepository, fileStorage, cachePort }),
@@ -95,6 +102,7 @@ function buildContainer() {
         citaRepository,
         unitOfWork,
         fileStorage,
+        thumbnailService,
         userRepository,
         notificationPort,
         cachePort,
@@ -102,12 +110,14 @@ function buildContainer() {
       upsertMiEntrada: makeUpsertMiEntrada({
         citaRepository,
         fileStorage,
+        thumbnailService,
         userRepository,
         notificationPort,
         entryBodySchema,
         cachePort,
       }),
-      addFotosToEntrada: makeAddFotosToEntrada({ citaRepository, fileStorage, cachePort }),
+      addFotosToEntrada: makeAddFotosToEntrada({ citaRepository, fileStorage, thumbnailService, cachePort }),
+      nudgePartner: makeNudgePartner({ citaRepository, userRepository, notificationPort, cachePort }),
       createIdeaCita: makeCreateIdeaCita({ ideaCitaRepository, cachePort, pubSubPort }),
       listIdeasCitas: makeListIdeasCitas({ ideaCitaRepository, cachePort }),
       updateIdeaCita: makeUpdateIdeaCita({ ideaCitaRepository, cachePort, pubSubPort }),
