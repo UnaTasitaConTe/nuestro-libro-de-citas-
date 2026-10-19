@@ -52,3 +52,32 @@ describe('ParejaPage: mensajes anunciados', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Código de invitación inválido');
   });
 });
+
+describe('ParejaPage: copiar sin portapapeles (HTTP en la red local)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    client.get.mockResolvedValue({ data: { inviteCode: 'ABC123', members: [{ id: 1, name: 'Ana' }] } });
+  });
+
+  it('si el portapapeles no está disponible, selecciona el link y lo explica', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new TypeError('clipboard no disponible'));
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Copiar' }));
+
+    const link = screen.getByLabelText('Link de invitación');
+    expect(link).toHaveFocus();
+    expect(link.selectionStart).toBe(0);
+    expect(link.selectionEnd).toBe(link.value.length);
+    const status = screen.getAllByRole('status').find((s) => s.textContent);
+    expect(status).toHaveTextContent('No se pudo copiar automáticamente. El link está seleccionado');
+  });
+
+  it('las secciones tienen títulos en lugar de etiquetas en mayúsculas', async () => {
+    renderPage();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Invitar a mi pareja' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Quiénes están en este libro' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: '¿Ya tienes cuenta?' })).toBeInTheDocument();
+  });
+});

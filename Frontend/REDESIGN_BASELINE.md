@@ -314,3 +314,25 @@ Fecha: 2026-10-19 · Rama: `rediseno-ui`.
 Además, en `BacklogCard` se quita `outline-none` de los dos campos de edición en línea: con las capas, esa utilidad habría anulado el contorno de foco de la regla base.
 
 Login, registro, álbum, Galería y formularios: sin ninguna diferencia. Pruebas 77/77, lint igual que antes.
+
+---
+
+# Etapa 4 — Rediseño pantalla a pantalla
+
+Una pantalla por commit; en cada una: revisión de componentes, API, estados y pruebas; mismas peticiones, rutas, permisos y autenticación (cubierto por pruebas que comprueban URL y cuerpo de cada petición); verificación en Chrome con la API simulada dentro del navegador.
+
+| Commit | Pantalla | Puntos clave |
+|---|---|---|
+| `ae7ea20` | CitaDetailPage | `<h1>`, versiones como `<article>`/`<dl>`, «Agregar fotos» accesible por teclado, valoraciones de solo lectura como imagen con nombre, texto «Ya no se puede borrar» corregido |
+| `c1849bb` | Formularios (crear, mi versión, editar) + EntryFields | `URL.createObjectURL` con ciclo de vida seguro, valoración como grupo de radio, `RepetiriamosField`, `CitaEditPage` sin formulario vacío durante la carga |
+| `a1bb7a5` | CalendarioPage | `<table>`, días con cita como enlaces, mes en la URL, fallo de carga ya no se muestra como «sin citas» |
+| `b158cd9` | (transversal) Capas CSS | Reglas propias en `@layer base`/`components` (ver sección anterior) |
+| `93f6df1` | GaleriaPage + Carousel | Nombres únicos, pie visible en táctil, una parada de tabulación en el carrusel, flechas visibles en táctil |
+| `55b2b39` | BacklogPage + BacklogCard | Arrastre por teclado en español, selector «Mover a», edición accesible (la descripción no se podía editar), errores recuperables |
+| `d7e8ca1` | CitasListPage + CitaCard + Pagination | Enlace extendido con nombre corto, estados anunciados, paginación de 44 px en táctil |
+| `9cd4bd4` | (limpieza) Flipbook.jsx, CitasFlipbook.jsx | Eliminados tras verificar referencias directas, dinámicas e indirectas; nunca se usaron |
+| (este) | Login, Registro, Pareja + luna | `AuthLayout` con `<main>`, `PasswordInput`, ayuda de contraseña visible, copiar con alternativa sin portapapeles, luna en la esquina sin tapar títulos ni acciones |
+
+**Estado final de la etapa 4**: 105 pruebas en 17 archivos (antes de la etapa 0: 0); lint con el mismo aviso preexistente; sin `transition-all`, `confirm()` ni `.eyebrow` en el código.
+
+**Pendiente (fuera del frontend)**: `GET /api/citas/gallery` responde 500 en el backend local.

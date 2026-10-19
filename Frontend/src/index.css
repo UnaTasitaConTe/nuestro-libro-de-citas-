@@ -271,13 +271,15 @@ body::after {
     radial-gradient(circle 32vw at 42.5vw calc(115vh - 22.5vw), rgba(255, 204, 51, 0.06), transparent 70%);
 }
 
+/* La luna vive en la esquina, por encima de la cabecera de cada página: antes
+   (top 96px) quedaba detrás de las acciones de la cabecera y, en móvil, de los títulos. */
 .moon-glow {
   position: fixed;
-  top: 96px; right: 8%;
-  width: 76px; height: 76px;
+  top: 20px; right: 24px;
+  width: 60px; height: 60px;
   border-radius: 9999px;
   background: #ffe9a3;
-  box-shadow: 20px -8px 0 3px #070b22, 0 0 44px 10px rgba(255, 204, 51, 0.28);
+  box-shadow: 16px -6px 0 3px #070b22, 0 0 40px 8px rgba(255, 204, 51, 0.26);
   pointer-events: none;
   z-index: 0;
   animation: drift 9s ease-in-out infinite;
@@ -541,15 +543,6 @@ html[data-sky-paused] .flying-dragon {
 }
 
 /* Cabecera de sección */
-.eyebrow {
-  font-family: var(--font-display);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-secondary);
-}
-
 .section-title {
   font-family: var(--font-display);
   font-weight: 700;
@@ -572,15 +565,14 @@ html[data-sky-paused] .flying-dragon {
 
 /* ====================== COMPONENTES: FORMULARIOS ====================== */
 
+/* Etiqueta de campo en minúscula inicial (antes versalitas con tracking), igual
+   que labelClass de los formularios de cita. */
 .field-label {
   display: block;
-  font-family: var(--font-display);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-fg-muted);
-  margin-bottom: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-fg);
+  margin-bottom: 0.375rem;
 }
 
 .field {
@@ -844,7 +836,13 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
 /* ====================== RESPONSIVE / RENDIMIENTO ====================== */
 
 @media (max-width: 640px) {
-  .moon-glow { top: 84px; right: 6%; width: 56px; height: 56px; }
+  /* Móvil: pequeña y pegada al borde, bajo la cabecera fija, para no tapar títulos. */
+  .moon-glow {
+    top: calc(74px + env(safe-area-inset-top)); right: 12px;
+    width: 34px; height: 34px;
+    box-shadow: 9px -4px 0 2px #070b22, 0 0 22px 5px rgba(255, 204, 51, 0.22);
+    opacity: 0.85;
+  }
   .btn { padding: 0.7rem 1.15rem; }
 }
 
