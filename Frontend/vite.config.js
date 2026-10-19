@@ -16,5 +16,10 @@ export default defineConfig(({ mode }) => {
         '/uploads': apiTarget,
       },
     },
+    test: {
+      environment: 'jsdom',
+      include: ['src/**/*.test.{js,jsx}'],
+      setupFiles: ['./src/test/setup.js'],
+    },
   }
 })
