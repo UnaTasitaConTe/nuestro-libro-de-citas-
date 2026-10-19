@@ -4,6 +4,7 @@ import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
+import StatusMessage from '../components/ui/StatusMessage';
 
 export default function ParejaPage() {
   const { refreshToken } = useAuth();
@@ -113,6 +114,10 @@ export default function ParejaPage() {
               )}
             </button>
           </div>
+          {/* El botón ya muestra «¡Copiado!»; esto lo anuncia a lectores de pantalla. */}
+          <StatusMessage className="sr-only">
+            {copied ? 'Link de invitación copiado al portapapeles' : ''}
+          </StatusMessage>
         </section>
 
         {/* ---------- Unirse con código ---------- */}
@@ -136,7 +141,9 @@ export default function ParejaPage() {
             </button>
           </form>
 
-          {joinError && <p className="alert alert-danger mt-4">{joinError}</p>}
+          <StatusMessage tone="error" className="alert alert-danger mt-4">
+            {joinError}
+          </StatusMessage>
         </section>
       </div>
     </Layout>

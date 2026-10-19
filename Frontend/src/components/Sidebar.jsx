@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DragonIcon from './DragonIcon';
+import useModalDialog from './ui/useModalDialog';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Nuestras citas', Icon: BookHeart, end: true },
@@ -25,8 +26,6 @@ const NAV_ITEMS = [
 
 const DRAWER_ID = 'menu-movil';
 const DESKTOP_QUERY = '(min-width: 768px)';
-// Respaldo por si no llega transitionend (p. ej. transiciones desactivadas).
-const DRAWER_EXIT_FALLBACK_MS = 400;
 
 function NavLinks({ collapsed, onNavigate }) {
   return (
@@ -93,92 +92,30 @@ function UserCard({ name }) {
 }
 
 /**
- * Drawer móvil sobre <dialog> modal: el resto de la página queda inerte,
- * Escape lo cierra y el foco vuelve al botón que lo abrió.
+ * Drawer móvil sobre <dialog> modal (ver useModalDialog): el resto de la
+ * página queda inerte, Escape lo cierra y el foco vuelve al botón que lo abrió.
  * La animación la controla `data-state` (ver .drawer en index.css).
  */
 function MobileDrawer({ open, onClose, returnFocusRef, children }) {
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return undefined;
-
-    if (open) {
-      if (!dialog.open) dialog.showModal();
-      // Un frame con el estado cerrado para que la entrada tenga desde dónde animar.
-      const frame = requestAnimationFrame(() => {
-        dialog.dataset.state = 'open';
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-
-    if (!dialog.open) {
-      delete dialog.dataset.state;
-      return undefined;
-    }
-
-    // Salida: se anima y después se cierra el diálogo.
-    dialog.dataset.state = 'closing';
-    let finished = false;
-    function finish() {
-      if (finished) return;
-      finished = true;
-      dialog.close();
-      delete dialog.dataset.state;
-      returnFocusRef.current?.focus();
-    }
-    function onTransitionEnd(event) {
-      if (event.target.hasAttribute('data-drawer-part')) finish();
-    }
-    dialog.addEventListener('transitionend', onTransitionEnd);
-    const fallback = setTimeout(finish, DRAWER_EXIT_FALLBACK_MS);
-    return () => {
-      dialog.removeEventListener('transitionend', onTransitionEnd);
-      clearTimeout(fallback);
-    };
-  }, [open, returnFocusRef]);
-
-  // Bloquea el scroll del documento mientras el menú está abierto.
-  useEffect(() => {
-    if (!open) return undefined;
-    const root = document.documentElement;
-    const previous = root.style.overflow;
-    root.style.overflow = 'hidden';
-    return () => {
-      root.style.overflow = previous;
-    };
-  }, [open]);
-
-  function handleCancel(event) {
-    // Escape: en lugar del cierre instantáneo del navegador, se anima la salida.
-    event.preventDefault();
-    onClose();
-  }
-
-  function handleNativeClose() {
-    // Si el navegador cerró el diálogo por su cuenta (sin pasar por la salida
-    // animada, que antes cambia data-state), se sincroniza el estado.
-    if (dialogRef.current?.dataset.state === 'open') onClose();
-  }
+  const dialog = useModalDialog({ open, onRequestClose: onClose, returnFocusRef });
 
   return (
     <dialog
-      ref={dialogRef}
+      ref={dialog.ref}
       id={DRAWER_ID}
       aria-label="Menú de navegación"
-      onCancel={handleCancel}
-      onClose={handleNativeClose}
+      onCancel={dialog.onCancel}
+      onClose={dialog.onClose}
       className="drawer fixed inset-0 m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 text-inherit backdrop:bg-transparent md:hidden"
     >
       <div
-        data-drawer-part
+        data-dialog-part
         className="drawer-overlay absolute inset-0 bg-black/70"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        data-drawer-part
+        data-dialog-part
         className="drawer-panel absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto overscroll-contain border-r border-line bg-paper pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl"
       >
         {children}

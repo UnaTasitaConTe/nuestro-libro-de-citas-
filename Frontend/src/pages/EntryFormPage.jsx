@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import EntryFields from '../components/EntryFields';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { REPETIRIAMOS_LABEL } from '../constants/repetiriamos';
 import { formatFecha } from '../utils/date';
 
@@ -26,6 +27,7 @@ export default function EntryFormPage() {
   const [entry, setEntry] = useState(emptyEntry);
   const [fotos, setFotos] = useState([]);
   const [existingPhotos, setExistingPhotos] = useState([]);
+  const [photoToDelete, setPhotoToDelete] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -47,15 +49,16 @@ export default function EntryFormPage() {
     });
   }, [id, user.id]);
 
-  async function handleRemoveExisting(photoId) {
-    if (!confirm('¿Borrar esta foto?')) return;
+  async function removeExistingPhoto() {
     setError('');
     try {
-      const { data } = await client.delete(`/citas/${id}/fotos/${photoId}`);
+      const { data } = await client.delete(`/citas/${id}/fotos/${photoToDelete}`);
       const mine = data.entries.find((e) => e.user_id === user.id);
       setExistingPhotos(mine?.photos || []);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo borrar la foto');
+    } finally {
+      setPhotoToDelete(null);
     }
   }
 
@@ -121,7 +124,7 @@ export default function EntryFormPage() {
           fotos={fotos}
           setFotos={setFotos}
           existingPhotos={existingPhotos}
-          onRemoveExisting={handleRemoveExisting}
+          onRemoveExisting={setPhotoToDelete}
         />
 
         <div className="form-actions">
@@ -130,6 +133,16 @@ export default function EntryFormPage() {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={photoToDelete !== null}
+        title="¿Borrar esta foto?"
+        description="La foto se eliminará de tu versión de la cita. No se puede deshacer."
+        confirmLabel="Borrar foto"
+        busyLabel="Borrando…"
+        onConfirm={removeExistingPhoto}
+        onCancel={() => setPhotoToDelete(null)}
+      />
     </Layout>
   );
 }

@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import HeartRating from '../components/HeartRating';
 import Carousel from '../components/Carousel';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import StatusMessage from '../components/ui/StatusMessage';
 import { REPETIRIAMOS_LABEL } from '../constants/repetiriamos';
 import { averageValoracion } from '../utils/rating';
 import { formatFecha } from '../utils/date';
@@ -75,7 +77,9 @@ export default function CitaDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [nudging, setNudging] = useState(false);
-  const [nudgeMsg, setNudgeMsg] = useState('');
+  const [nudge, setNudge] = useState(null); // { tone: 'success' | 'error', text }
+  const [photoToDelete, setPhotoToDelete] = useState(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     client
@@ -103,36 +107,37 @@ export default function CitaDetailPage() {
     }
   }
 
-  async function handleDeletePhoto(photo) {
-    if (!confirm('¿Borrar esta foto?')) return;
+  async function deletePhoto() {
     setPhotoError('');
     try {
-      const { data } = await client.delete(`/citas/${id}/fotos/${photo.id}`);
+      const { data } = await client.delete(`/citas/${id}/fotos/${photoToDelete.id}`);
       setCita(data);
     } catch (err) {
       setPhotoError(err.response?.data?.error || 'No se pudo borrar la foto');
+    } finally {
+      setPhotoToDelete(null);
     }
   }
 
-  async function handleDelete() {
-    if (!confirm('¿Seguro que quieres borrar esta cita completa (ambas versiones)?')) return;
+  async function deleteCita() {
     setDeleteError('');
     try {
       await client.delete(`/citas/${id}`);
       navigate('/');
     } catch (err) {
       setDeleteError(err.response?.data?.error || 'No se pudo borrar la cita');
+      setConfirmingDelete(false);
     }
   }
 
   async function handleNudge() {
     setNudging(true);
-    setNudgeMsg('');
+    setNudge(null);
     try {
       await client.post(`/citas/${id}/nudge`);
-      setNudgeMsg('✅ ¡Recordatorio enviado! Tu pareja recibirá un correo.');
+      setNudge({ tone: 'success', text: '✅ ¡Recordatorio enviado! Tu pareja recibirá un correo.' });
     } catch (err) {
-      setNudgeMsg(err.response?.data?.error || 'No se pudo enviar el recordatorio');
+      setNudge({ tone: 'error', text: err.response?.data?.error || 'No se pudo enviar el recordatorio' });
     } finally {
       setNudging(false);
     }
@@ -191,7 +196,7 @@ export default function CitaDetailPage() {
             {myEntry ? 'Editar mi versión' : 'Agregar mi versión'}
           </Link>
           {user.role === 'ADMIN' && (
-            <button onClick={handleDelete} className="btn btn-danger btn-sm">
+            <button type="button" onClick={() => setConfirmingDelete(true)} className="btn btn-danger btn-sm">
               <Trash2 className="h-4 w-4" strokeWidth={1.75} />
               Borrar cita
             </button>
@@ -230,14 +235,18 @@ export default function CitaDetailPage() {
             Ya no se puede borrar: las dos versiones fueron contadas 💛
           </p>
         )}
-        {deleteError && <p className="alert alert-danger mt-4">{deleteError}</p>}
+        <StatusMessage tone="error" className="alert alert-danger mt-4">
+          {deleteError}
+        </StatusMessage>
       </section>
 
       {/* ---------- Fotos ---------- */}
       <div className="mx-auto mb-2 max-w-lg">
-        <Carousel photos={allPhotos} alt={cita.nombre} onDelete={handleDeletePhoto} />
+        <Carousel photos={allPhotos} alt={cita.nombre} onDelete={setPhotoToDelete} />
       </div>
-      {photoError && <p className="alert alert-danger mx-auto max-w-md">{photoError}</p>}
+      <StatusMessage tone="error" className="alert alert-danger mx-auto max-w-md">
+        {photoError}
+      </StatusMessage>
 
       {myEntry ? (
         <div className="mb-12 mt-4 flex flex-col items-center">
@@ -253,7 +262,9 @@ export default function CitaDetailPage() {
               onChange={handleAddPhotos}
             />
           </label>
-          {uploadError && <p className="alert alert-danger mt-3">{uploadError}</p>}
+          <StatusMessage tone="error" className="alert alert-danger mt-3">
+            {uploadError}
+          </StatusMessage>
         </div>
       ) : (
         <div className="mb-12" />
@@ -283,11 +294,13 @@ export default function CitaDetailPage() {
             <Bell className="h-4 w-4" strokeWidth={1.75} />
             {nudging ? 'Enviando...' : 'Recordar a mi pareja 💌'}
           </button>
-          {nudgeMsg && (
-            <p className={`mt-3 text-xs ${nudgeMsg.startsWith('✅') ? 'text-green-600' : 'text-red-400'}`}>
-              {nudgeMsg}
-            </p>
-          )}
+          {/* Una sola región cortés para éxito y error: si cambiara el role al
+              cambiar el resultado, el anuncio dejaría de ser fiable. */}
+          <StatusMessage
+            className={`mt-3 text-xs ${nudge?.tone === 'success' ? 'text-success' : 'text-danger'}`}
+          >
+            {nudge?.text}
+          </StatusMessage>
         </div>
       )}
 
@@ -296,6 +309,26 @@ export default function CitaDetailPage() {
           <EntryView key={entry.id} entry={entry} delay={i * 0.12} index={i} />
         ))}
       </div>
+
+      <ConfirmDialog
+        open={photoToDelete !== null}
+        title="¿Borrar esta foto?"
+        description="La foto se eliminará de la cita. No se puede deshacer."
+        confirmLabel="Borrar foto"
+        busyLabel="Borrando…"
+        onConfirm={deletePhoto}
+        onCancel={() => setPhotoToDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="¿Borrar esta cita?"
+        description="Se borrará la cita completa, con sus versiones y todas sus fotos. No se puede deshacer."
+        confirmLabel="Borrar cita"
+        busyLabel="Borrando…"
+        onConfirm={deleteCita}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </Layout>
   );
 }

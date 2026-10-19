@@ -1,31 +1,12 @@
-import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useState } from 'react';
+import IconButton from './ui/IconButton';
+import Lightbox from './ui/Lightbox';
 
 const TILTS = [-4, 3, -2, 4, -3, 2];
 
 export default function Carousel({ photos, alt, onDelete }) {
   const [index, setIndex] = useState(0);
   const [lightbox, setLightbox] = useState(false);
-
-  // Bloquear scroll del body cuando el lightbox está abierto
-  useEffect(() => {
-    if (lightbox) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [lightbox]);
-
-  // Keyboard nav en lightbox
-  useEffect(() => {
-    if (!lightbox) return;
-    function onKey(e) {
-      if (e.key === 'Escape') setLightbox(false);
-      if (e.key === 'ArrowLeft') setIndex((i) => (((i - 1) % photos.length) + photos.length) % photos.length);
-      if (e.key === 'ArrowRight') setIndex((i) => (i + 1) % photos.length);
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [lightbox, photos.length]);
 
   if (!photos.length) {
     return (
@@ -36,6 +17,8 @@ export default function Carousel({ photos, alt, onDelete }) {
   }
 
   const n = photos.length;
+  // Tras borrar la última foto, index puede quedar fuera de rango.
+  const current = photos[Math.min(index, n - 1)];
 
   function go(i) {
     setIndex(((i % n) + n) % n);
@@ -97,17 +80,16 @@ export default function Carousel({ photos, alt, onDelete }) {
                 }`}
               >
                 {isCenter && onDelete && (
-                  <button
-                    type="button"
+                  <IconButton
+                    label="Borrar foto"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(p);
                     }}
-                    aria-label="Borrar foto"
-                    className="icon-btn absolute -right-3 -top-3 z-10 h-8 w-8 border-danger/40 bg-paper text-sm text-danger hover:border-danger hover:text-danger"
+                    className="absolute -right-3 -top-3 z-10 h-8 w-8 border-danger/40 bg-paper text-sm text-danger hover:border-danger hover:text-danger"
                   >
                     ×
-                  </button>
+                  </IconButton>
                 )}
                 <div className="aspect-square overflow-hidden bg-polaroid-mat">
                   <img
@@ -130,22 +112,20 @@ export default function Carousel({ photos, alt, onDelete }) {
 
         {n > 1 && (
           <>
-            <button
-              type="button"
+            <IconButton
+              label="Foto anterior"
               onClick={prev}
-              aria-label="Foto anterior"
-              className="icon-btn absolute left-1 top-1/2 z-20 -translate-y-1/2 bg-paper/85 opacity-0 transition-opacity duration-300 focus-visible:opacity-100 group-hover:opacity-100 sm:left-4"
+              className="absolute left-1 top-1/2 z-20 -translate-y-1/2 bg-paper/85 opacity-0 transition-opacity duration-300 focus-visible:opacity-100 group-hover:opacity-100 sm:left-4"
             >
               ‹
-            </button>
-            <button
-              type="button"
+            </IconButton>
+            <IconButton
+              label="Foto siguiente"
               onClick={next}
-              aria-label="Foto siguiente"
-              className="icon-btn absolute right-1 top-1/2 z-20 -translate-y-1/2 bg-paper/85 opacity-0 transition-opacity duration-300 focus-visible:opacity-100 group-hover:opacity-100 sm:right-4"
+              className="absolute right-1 top-1/2 z-20 -translate-y-1/2 bg-paper/85 opacity-0 transition-opacity duration-300 focus-visible:opacity-100 group-hover:opacity-100 sm:right-4"
             >
               ›
-            </button>
+            </IconButton>
             <div className="absolute bottom-1 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 rounded-full border border-line bg-paper/70 px-2.5 py-1.5">
               {photos.map((p, i) => (
                 <button
@@ -166,57 +146,19 @@ export default function Carousel({ photos, alt, onDelete }) {
         )}
       </div>
 
-      {/* Lightbox — sin backdrop-blur para evitar flicker en móvil */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
-          onClick={() => setLightbox(false)}
-        >
-          <button
-            type="button"
-            onClick={() => setLightbox(false)}
-            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
-            aria-label="Cerrar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          {n > 1 && (
-            <button
-              type="button"
-              onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-2xl text-white hover:bg-white/20 transition-colors"
-              aria-label="Foto anterior"
-            >
-              ‹
-            </button>
-          )}
-
-          <div className="max-h-[85vh] max-w-[90vw] px-10" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={photos[index].foto_url}
-              alt={alt}
-              className="max-h-[85vh] max-w-full rounded-lg object-contain"
-            />
-            {photos[index].authorName && (
-              <p className="mt-3 text-center text-sm text-white/70">
-                {photos[index].authorName}
-              </p>
-            )}
-          </div>
-
-          {n > 1 && (
-            <button
-              type="button"
-              onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-2xl text-white hover:bg-white/20 transition-colors"
-              aria-label="Foto siguiente"
-            >
-              ›
-            </button>
-          )}
-        </div>
-      )}
+      <Lightbox
+        open={lightbox}
+        onClose={() => setLightbox(false)}
+        src={current.foto_url}
+        alt={alt}
+        onPrev={n > 1 ? () => go(index - 1) : undefined}
+        onNext={n > 1 ? () => go(index + 1) : undefined}
+        caption={
+          current.authorName && (
+            <span className="text-sm text-white/70">{current.authorName}</span>
+          )
+        }
+      />
     </>
   );
 }

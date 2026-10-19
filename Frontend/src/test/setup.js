@@ -9,15 +9,32 @@ afterEach(() => {
 });
 
 // jsdom no implementa showModal/close de <dialog>: versión mínima que
-// refleja el atributo `open` y emite `close`, como el navegador.
+// refleja el atributo `open`, enfoca el primer elemento enfocable (como hace
+// el navegador al abrir un modal) y emite `close`.
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 if (!HTMLDialogElement.prototype.showModal) {
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.open = true;
+    this.querySelector(FOCUSABLE)?.focus();
   };
   HTMLDialogElement.prototype.close = function close() {
     if (!this.open) return;
     this.open = false;
     this.dispatchEvent(new Event('close'));
+  };
+}
+
+// jsdom no implementa IntersectionObserver: se considera visible todo lo observado.
+if (!window.IntersectionObserver) {
+  window.IntersectionObserver = class {
+    constructor(callback) {
+      this.callback = callback;
+    }
+    observe(target) {
+      this.callback([{ isIntersecting: true, target }], this);
+    }
+    unobserve() {}
+    disconnect() {}
   };
 }
 

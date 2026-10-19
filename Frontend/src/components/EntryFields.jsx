@@ -1,5 +1,6 @@
 import HeartRating from './HeartRating';
 import { Flame } from 'lucide-react';
+import Field from './ui/Field';
 
 export const textareaClass =
   'w-full rounded-xl border border-line bg-card/60 p-3 outline-none focus:border-ink-dark focus:ring-2 focus:ring-ink-dark/30 transition';
@@ -30,7 +31,7 @@ export default function EntryFields({
   return (
     <div className="grid md:grid-cols-2 gap-8">
       <div>
-        <label className="block text-sm mb-1 text-ink">Fotos</label>
+        <p className="block text-sm mb-1 text-ink">Fotos</p>
 
         {existingPhotos.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mb-2">
@@ -42,9 +43,11 @@ export default function EntryFields({
                     type="button"
                     onClick={() => onRemoveExisting(p.id)}
                     aria-label="Borrar foto"
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-paper/90 text-ink-dark text-xs flex items-center justify-center"
+                    className="absolute top-0 right-0 flex h-11 w-11 items-start justify-end p-1"
                   >
-                    ×
+                    <span aria-hidden="true" className="w-5 h-5 rounded-full bg-paper/90 text-ink-dark text-xs flex items-center justify-center">
+                      ×
+                    </span>
                   </button>
                 )}
               </div>
@@ -61,9 +64,11 @@ export default function EntryFields({
                   type="button"
                   onClick={() => removeNewFile(i)}
                   aria-label="Quitar foto"
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-paper/90 text-ink-dark text-xs flex items-center justify-center"
+                  className="absolute top-0 right-0 flex h-11 w-11 items-start justify-end p-1"
                 >
-                  ×
+                  <span aria-hidden="true" className="w-5 h-5 rounded-full bg-paper/90 text-ink-dark text-xs flex items-center justify-center">
+                    ×
+                  </span>
                 </button>
               </div>
             ))}
@@ -88,49 +93,57 @@ export default function EntryFields({
       </div>
 
       <div>
-        <label className="block text-sm mb-1 text-ink">Valoración</label>
+        <p className="block text-sm mb-1 text-ink">Valoración</p>
         <HeartRating value={entry.valoracion} onChange={(v) => update('valoracion', v)} />
       </div>
 
-      <div>
-        <label className="block text-sm mb-1 text-ink">Qué hicimos</label>
-        <textarea
-          rows={3}
-          value={entry.queHicimos}
-          onChange={(e) => update('queHicimos', e.target.value)}
-          className={textareaClass}
-        />
-      </div>
+      <Field label="Qué hicimos" labelClassName="block text-sm mb-1 text-ink">
+        {(field) => (
+          <textarea
+            {...field}
+            rows={3}
+            value={entry.queHicimos}
+            onChange={(e) => update('queHicimos', e.target.value)}
+            className={textareaClass}
+          />
+        )}
+      </Field>
 
-      <div>
-        <label className="block text-sm mb-1 text-ink">Cómo me sentí</label>
-        <textarea
-          rows={3}
-          value={entry.comoTeSentiste}
-          onChange={(e) => update('comoTeSentiste', e.target.value)}
-          className={textareaClass}
-        />
-      </div>
+      <Field label="Cómo me sentí" labelClassName="block text-sm mb-1 text-ink">
+        {(field) => (
+          <textarea
+            {...field}
+            rows={3}
+            value={entry.comoTeSentiste}
+            onChange={(e) => update('comoTeSentiste', e.target.value)}
+            className={textareaClass}
+          />
+        )}
+      </Field>
 
-      <div>
-        <label className="block text-sm mb-1 text-ink">Lo que más me gustó</label>
-        <textarea
-          rows={3}
-          value={entry.loQueMasGusto}
-          onChange={(e) => update('loQueMasGusto', e.target.value)}
-          className={textareaClass}
-        />
-      </div>
+      <Field label="Lo que más me gustó" labelClassName="block text-sm mb-1 text-ink">
+        {(field) => (
+          <textarea
+            {...field}
+            rows={3}
+            value={entry.loQueMasGusto}
+            onChange={(e) => update('loQueMasGusto', e.target.value)}
+            className={textareaClass}
+          />
+        )}
+      </Field>
 
-      <div>
-        <label className="block text-sm mb-1 text-ink">Lo que menos me gustó</label>
-        <textarea
-          rows={3}
-          value={entry.loQueMenosGusto}
-          onChange={(e) => update('loQueMenosGusto', e.target.value)}
-          className={textareaClass}
-        />
-      </div>
+      <Field label="Lo que menos me gustó" labelClassName="block text-sm mb-1 text-ink">
+        {(field) => (
+          <textarea
+            {...field}
+            rows={3}
+            value={entry.loQueMenosGusto}
+            onChange={(e) => update('loQueMenosGusto', e.target.value)}
+            className={textareaClass}
+          />
+        )}
+      </Field>
 
       <div className="md:col-span-2">
         <label className="flex items-center gap-3 cursor-pointer select-none group">

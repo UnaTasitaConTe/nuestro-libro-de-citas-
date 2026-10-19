@@ -224,3 +224,67 @@ Fecha: 2026-10-19 · Rama: `rediseno-ui` · **Sin commit**. `App.jsx` **no se ha
 - Animación de anchura/padding al colapsar la barra lateral de escritorio (`transition-[width]` / `transition-[padding]`, 300 ms): provoca reflujo; revisar en la etapa 5.
 - La luna se superpone al titular en login/registro móvil (etapa 4, pantallas de acceso).
 - Los lightbox de Galería y Carousel siguen sin `<dialog>` (etapa 3: componente `Lightbox`).
+
+---
+
+# Etapa 3 — Componentes reutilizables y diálogos
+
+Fecha: 2026-10-19 · Rama: `rediseno-ui` · **Sin commit**. Rutas, API y lógica de negocio sin cambios: cada borrado hace exactamente la misma llamada que antes; solo cambia cómo se pide la confirmación.
+
+## Componentes nuevos (`src/components/ui/`)
+
+| Componente | Qué resuelve | Dónde se usa |
+|---|---|---|
+| `useModalDialog.js` | Ciclo de vida común de `<dialog>` modal: `showModal()`, Escape (`cancel`) con salida animada, `data-state`, cierre tras `transitionend` (respaldo de 400 ms), foco inicial opcional, **retorno del foco** al disparador (o a `<main>` si ya no existe), bloqueo de scroll. Extraído del drawer de la etapa 2 para no duplicarlo. | Drawer móvil, `Dialog`, `Lightbox` |
+| `Dialog.jsx` | Diálogo modal centrado; título obligatorio como nombre accesible (`aria-labelledby`). Entrada 220 ms fundido + escala desde 0.96; salida 160 ms. | `ConfirmDialog` |
+| `ConfirmDialog.jsx` | Sustituye a `window.confirm()`: `role="alertdialog"`, descripción con `aria-describedby`, **foco inicial en «Cancelar»**, `onConfirm` asíncrono con estado «Borrando…» (botones desactivados y Escape ignorado mientras dura). | `CitaDetailPage` (foto y cita), `EntryFormPage` (foto) |
+| `Field.jsx` | Etiqueta asociada por `useId`, ayuda y error en `aria-describedby`, `aria-invalid`. El control se recibe como función (sin clonar elementos). `labelClassName` conserva estilos existentes. | `EntryFields` (4 textos) |
+| `IconButton.jsx` | Botón solo con icono con `label` obligatorio (nombre accesible), `type="button"` y `.icon-btn`. Variante `overlay` para el visor. | `Carousel`, `Lightbox` |
+| `StatusMessage.jsx` | Región viva **siempre presente** (también vacía); `role="alert"` para errores, `role="status"` para el resto. `className` solo se aplica con contenido. | `CitaDetailPage`, `ParejaPage` |
+| `Lightbox.jsx` | Visor único de fotos sobre `<dialog>` modal: foco en «Cerrar», ← → para recorrer, Escape cierra y devuelve el foco a la miniatura. Sustituye los dos visores que había. | `GaleriaPage`, `Carousel` |
+
+## Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `src/index.css` | `.dialog-backdrop` / `.dialog-panel` (animación); `.icon-btn` con **mínimo 44×44 px con `pointer: coarse`** (36 px con ratón, sin cambio visual en escritorio); variante `.icon-btn-overlay` (44 px, blanco sobre negro). |
+| `src/components/Sidebar.jsx` | `MobileDrawer` usa `useModalDialog` (mismo comportamiento; `data-drawer-part` → `data-dialog-part`). |
+| `src/components/EntryFields.jsx` | `Field` en los 4 textos (las etiquetas no estaban asociadas). «Fotos» y «Valoración» pasan de `<label>` sin control a `<p>` con la misma clase. Botones «Borrar/Quitar foto»: área táctil de 44 px con el mismo círculo visual de 20 px. |
+| `src/pages/EntryFormPage.jsx` | `confirm()` → `ConfirmDialog` («¿Borrar esta foto?»). |
+| `src/pages/CitaDetailPage.jsx` | 2 `confirm()` → `ConfirmDialog` («¿Borrar esta foto?», «¿Borrar esta cita?»). Errores de borrado y subida en `StatusMessage` (`role="alert"`). Recordatorio en una región `status`; el éxito usa `text-success` (antes `text-green-600`, con poco contraste sobre el fondo oscuro). |
+| `src/pages/GaleriaPage.jsx` | Visor local → `Lightbox`. `open` separado del índice para que la foto no desaparezca durante el cierre. Flechas ocultas si solo hay una foto. |
+| `src/components/Carousel.jsx` | Visor local → `Lightbox`; botones → `IconButton`; el índice se acota (ya no falla si se borra la última foto siendo la central). Se eliminan los listeners globales de teclado y el bloqueo de scroll propios. |
+| `src/pages/ParejaPage.jsx` | «¡Copiado!» anunciado con `StatusMessage` (`sr-only`); error al unirse con `role="alert"`. |
+| `src/test/setup.js` | Polyfills: `showModal` enfoca el primer elemento enfocable (como el navegador); `IntersectionObserver`. |
+
+**Texto de los diálogos verificado contra el backend**: `DeleteCita` borra la cita, sus versiones y los archivos de fotos; `DeleteFoto` borra la fila y el archivo. «No se puede deshacer» es exacto.
+
+## Pruebas (42 en total, antes 14)
+
+| Archivo | Cubre |
+|---|---|
+| `components/ui/ui.test.jsx` (6) | `Field` (asociación, descripción, `aria-invalid`), `IconButton`, `StatusMessage` (región persistente, `alert`), `ConfirmDialog` (estado ocupado, Escape ignorado mientras confirma). |
+| `pages/EntryFormPage.test.jsx` (5) | Etiquetas asociadas; borrar foto: **cancelar**, Escape, **confirmar** (misma llamada `DELETE`), error del servidor. |
+| `pages/CitaDetailPage.test.jsx` (7) | Borrar cita: **cancelar** (foco de vuelta), Escape, **confirmar** (navega al álbum), error anunciado. Borrar foto: **cancelar**, **confirmar** (el foco va a `<main>` porque el botón desaparece). Recordatorio anunciado. |
+| `pages/GaleriaPage.test.jsx` (4) | Visor modal, foco en «Cerrar», teclado y botones, Escape con retorno del foco y scroll restaurado. |
+| `components/Carousel.test.jsx` (3) | Visor compartido, «Borrar foto» delega en la página, índice acotado. |
+| `pages/ParejaPage.test.jsx` (2) | Copia anunciada, error al unirse como alerta. |
+
+## Verificación
+
+| Comprobación | Etapa 2 | Etapa 3 |
+|---|---|---|
+| `pnpm test` | 14/14 | **42/42** |
+| `pnpm lint` | 0 errores, 1 aviso | Igual |
+| Build CSS / JS | 66.34 / 399.97 kB | 67.15 / 402.71 kB (gzip 12.47 / 127.87) |
+| `confirm()` en `src/` | 3 | **0** |
+
+**Chrome real** (build de la etapa servido con `vite preview`; **API respondida dentro del navegador con datos de prueba, ningún borrado llegó al backend**): confirmación de cita modal con la entrada a mitad de recorrido a los 50 ms, foco en «Cancelar», Escape → `closing` → cerrado con foco en «Borrar cita» y sin `DELETE`; confirmar foto → `DELETE /api/citas/1/fotos/100` (interceptado); visor modal con foco en «Cerrar», → cambia de foto, Escape devuelve el foco a la miniatura y restaura el scroll; fondo del visor idéntico al original (negro al 95 %); con emulación táctil `.icon-btn` mide 44×44 px.
+
+## Hallazgos
+
+- **Precedencia de CSS**: las clases propias de `index.css` (`.icon-btn`, `.btn`…) no están en ninguna `@layer`, así que **ganan siempre a las utilidades de Tailwind** (que van en `@layer utilities`). Por eso `h-7 w-7` en el botón de colapsar la barra lateral y `text-danger border-danger/40` en «Borrar foto» del Carousel **nunca se aplicaron**. No se ha cambiado (alteraría el aspecto actual); propuesta para la etapa 4: mover las clases de componentes a `@layer components` y revisar visualmente esos casos.
+- El nombre accesible de las miniaturas de la Galería repite el título («Picnic Picnic 2 de mayo…») porque combina el `alt` con el pie visible → etapa 4.
+- La luna se transparenta a través de los botones de fondo casi transparente en el detalle de la cita (escritorio) → etapa 4.
+- `EntryFields` sigue llamando a `URL.createObjectURL` en cada render sin liberarlo → etapa 4.
+- `BacklogPage` borra ideas sin confirmación (no usaba `confirm()`; no se ha añadido para no cambiar el comportamiento).
