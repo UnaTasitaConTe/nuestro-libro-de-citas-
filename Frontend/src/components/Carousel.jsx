@@ -156,7 +156,7 @@ export default function Carousel({ photos, alt, onDelete }) {
                     go(i);
                   }}
                   aria-label={`Ir a foto ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                  className={`h-1.5 rounded-full transition-[width,background-color] duration-300 ${
                     i === index ? 'w-5 bg-ink-dark' : 'w-1.5 bg-ink/40 hover:bg-ink/70'
                   }`}
                 />

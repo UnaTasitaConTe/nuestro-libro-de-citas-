@@ -22,7 +22,7 @@ export default function HeartRating({
             type="button"
             disabled={readOnly}
             onClick={() => onChange?.(n)}
-            className={`leading-none transition-all duration-200 ease-out ${
+            className={`leading-none transition-[color,filter,translate,scale] duration-200 ease-out ${
               readOnly
                 ? 'cursor-default'
                 : 'cursor-pointer hover:scale-125 hover:-translate-y-0.5 active:scale-95'

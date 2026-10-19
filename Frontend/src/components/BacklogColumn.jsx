@@ -16,7 +16,7 @@ export default function BacklogColumn({ estado, label, ideas, onSave, onDelete, 
 
       <div
         ref={setNodeRef}
-        className={`min-h-[220px] space-y-2.5 rounded-3xl border border-dashed p-3 transition-all duration-300 ${
+        className={`min-h-[220px] space-y-2.5 rounded-3xl border border-dashed p-3 transition-[border-color,background-color,box-shadow] duration-300 ${
           isOver
             ? 'border-ink-dark bg-ink-dark/5 shadow-[inset_0_0_30px_-12px_rgba(255,204,51,0.5)]'
             : 'border-line bg-card/25'

@@ -79,7 +79,7 @@ export default function BacklogCard({ idea, onSave, onDelete }) {
           type="button"
           onClick={() => onDelete(idea.id)}
           aria-label="Borrar idea"
-          className="shrink-0 rounded-lg p-1 text-ink/40 opacity-0 transition-all hover:bg-danger/10 hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
+          className="shrink-0 rounded-lg p-1 text-ink/40 opacity-0 transition-[opacity,background-color,color] hover:bg-danger/10 hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
         >
           <Trash2 className="h-4 w-4" strokeWidth={1.75} />
         </button>

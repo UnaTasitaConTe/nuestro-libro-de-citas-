@@ -5,49 +5,101 @@
    Tipografía: Sora (display) + Manrope (texto) + Caveat (acento a mano)
    Paleta:  #070b22 · #141d4d · #8ba0ff · #ffcc33
    -------------------------------------------------------------------------
-   Se conservan los MISMOS nombres de tokens que usaba el proyecto
-   (paper, card, ink, ink-dark, line, royal, royal-light, polaroid...)
-   para que nada se rompa, pero con valores y utilidades nuevas.
+   Tokens semánticos (canvas, surface, fg, accent, border…) + alias de
+   compatibilidad con los nombres históricos (paper, card, ink, ink-dark,
+   line, royal…) para que las utilidades existentes sigan funcionando.
+   Los componentes nuevos deben usar los nombres semánticos.
    ========================================================================= */
 
-@theme {
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+/* `static`: Tailwind 4 solo emite las variables del tema que usa alguna
+   utilidad. Los tokens semánticos se emiten siempre porque los alias y las
+   clases de este archivo los referencian con var(). */
+@theme static {
+  /* Tipografía. Sora (--font-display) se conserva temporalmente: la usan
+     las clases font-display y los h1–h4; se migrará pantalla a pantalla. */
+  --font-ui: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-hand: "Caveat", cursive;
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
 
   /* Superficies */
-  --color-paper: #070b22;
-  --color-paper-soft: #0b1130;
-  --color-card: #141d4d;
-  --color-card-soft: #182459;
+  --color-canvas: #070b22;
+  --color-canvas-raised: #0b1130;
+  --color-surface: #141d4d;
+  --color-surface-raised: #182459;
 
   /* Texto */
-  --color-ink: #aeb8e6;
-  --color-ink-strong: #eef1ff;
-  --color-ink-dark: #ffcc33; /* acento oro (mantiene el nombre original) */
+  --color-fg: #eef1ff;
+  --color-fg-muted: #aeb8e6;
 
-  /* Líneas y acentos */
-  --color-line: rgba(139, 160, 255, 0.18);
-  --color-line-strong: rgba(255, 204, 51, 0.32);
-  --color-royal: #2d43a6;
-  --color-royal-light: #8ba0ff;
+  /* Acentos */
+  --color-accent: #ffcc33;
+  --color-accent-soft: #ffe9a3;
+  --color-on-accent: #1a1300;
+  --color-secondary: #8ba0ff;
+  --color-secondary-strong: #2d43a6;
+  --color-passion: #fb7185;
 
-  /* Polaroids */
-  --color-polaroid: #16204f;
-  --color-polaroid-mat: #0c1236;
-  --color-polaroid-ink: #ffe9a3;
-  --color-polaroid-ink-soft: #b9c2e8;
-  --color-tape: #ffe6a3;
+  /* Bordes */
+  --color-border: rgba(139, 160, 255, 0.18);
+  --color-border-accent: rgba(255, 204, 51, 0.32);
 
   /* Estados */
   --color-danger: #ff8095;
   --color-success: #58e3b4;
 
-  /* Sombras y transiciones */
+  /* Polaroids */
+  --color-polaroid: #16204f;
+  --color-polaroid-mat: #0c1236;
+  --color-polaroid-ink: var(--color-accent-soft);
+  --color-polaroid-ink-soft: #b9c2e8;
+  --color-tape: #ffe6a3;
+
+  /* Radios */
+  --radius-polaroid: 0.375rem;
+  --radius-field: 0.9rem;
+  --radius-surface: 1.5rem;
+  --radius-glass: 1.75rem;
+
+  /* Sombras */
   --shadow-soft: 0 8px 24px rgba(3, 6, 20, 0.45);
   --shadow-elevated: 0 22px 48px -18px rgba(3, 6, 20, 0.85);
   --shadow-gold: 0 12px 34px -10px rgba(255, 204, 51, 0.45);
-  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Curvas (skill animate). Sustituyen a las de Tailwind, demasiado suaves,
+     también en las utilidades ease-out / ease-in-out. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Alias de compatibilidad: mismos valores que antes, ahora derivados de los
+   tokens semánticos. */
+@theme {
+  --font-sans: var(--font-ui);
+
+  --color-paper: var(--color-canvas);
+  --color-paper-soft: var(--color-canvas-raised);
+  --color-card: var(--color-surface);
+  --color-card-soft: var(--color-surface-raised);
+
+  --color-ink: var(--color-fg-muted);
+  --color-ink-strong: var(--color-fg);
+  --color-ink-dark: var(--color-accent); /* el "ink-dark" histórico es el oro */
+
+  --color-line: var(--color-border);
+  --color-line-strong: var(--color-border-accent);
+  --color-royal: var(--color-secondary-strong);
+  --color-royal-light: var(--color-secondary);
+
+  --ease-smooth: var(--ease-out);
+}
+
+/* Duraciones: Tailwind no tiene espacio de nombres para ellas. */
+:root {
+  --duration-instant: 120ms; /* pulsación */
+  --duration-fast: 160ms;    /* hover, color */
+  --duration-base: 220ms;    /* cambios de estado */
+  --duration-slow: 280ms;    /* tarjetas, superposiciones */
 }
 
 /* ============================ ANIMACIONES ============================== */
@@ -95,6 +147,11 @@
   100% { transform: translate(115vw, 4vh) scale(var(--fly-scale, 1)); opacity: 0; }
 }
 
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes card-in {
   0% { opacity: 0; transform: translateY(22px) scale(0.97); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -106,12 +163,13 @@
 }
 
 .fade-in-up {
-  animation: card-in 0.55s var(--ease-smooth) both;
+  animation: card-in 0.55s var(--ease-out) both;
 }
 
 /* ============================ BASE ==================================== */
 
 html {
+  color-scheme: dark; /* controles nativos (fecha, scrollbars) en oscuro */
   font-family: var(--font-sans);
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
@@ -122,7 +180,7 @@ body {
   min-height: 100svh;
   background:
     linear-gradient(180deg, #04061a 0%, #070b22 28%, #0a1136 55%, #101a45 80%, #141d4d 100%);
-  color: var(--color-ink-strong);
+  color: var(--color-fg);
   overflow-x: hidden;
   font-feature-settings: "ss01", "cv01";
   letter-spacing: -0.005em;
@@ -141,7 +199,7 @@ h1, h2, h3, h4 {
 
 /* Foco accesible y consistente en toda la app */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-ink-dark);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 0.75rem;
 }
@@ -299,9 +357,9 @@ body::after {
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth),
-    background-color 0.25s var(--ease-smooth), border-color 0.25s var(--ease-smooth),
-    color 0.25s var(--ease-smooth), opacity 0.2s linear;
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-out);
 }
 
 .btn:disabled,
@@ -314,54 +372,67 @@ body::after {
 }
 
 .btn-primary {
-  color: #1a1300;
-  background-image: linear-gradient(100deg, #ffcc33 0%, #ffe08a 45%, #ffcc33 100%);
+  color: var(--color-on-accent);
+  background-image: linear-gradient(100deg, var(--color-accent) 0%, #ffe08a 45%, var(--color-accent) 100%);
   background-size: 200% 100%;
   box-shadow: var(--shadow-gold);
 }
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 40px -12px rgba(255, 204, 51, 0.6);
-  animation: shimmer 1.6s linear infinite;
-}
-.btn-primary:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 6px 16px -8px rgba(255, 204, 51, 0.6);
-}
 
 .btn-secondary {
-  color: var(--color-royal-light);
+  color: var(--color-secondary);
   background-color: rgba(139, 160, 255, 0.08);
   border-color: rgba(139, 160, 255, 0.32);
 }
-.btn-secondary:hover:not(:disabled) {
-  background-color: rgba(139, 160, 255, 0.16);
-  border-color: rgba(139, 160, 255, 0.6);
-  transform: translateY(-2px);
-}
-.btn-secondary:active:not(:disabled) { transform: translateY(0) scale(0.98); }
 
 .btn-ghost {
-  color: var(--color-ink);
-  border-color: var(--color-line);
+  color: var(--color-fg-muted);
+  border-color: var(--color-border);
   background-color: rgba(20, 29, 77, 0.4);
 }
-.btn-ghost:hover:not(:disabled) {
-  color: var(--color-ink-dark);
-  border-color: var(--color-line-strong);
-  background-color: rgba(20, 29, 77, 0.75);
-}
-.btn-ghost:active:not(:disabled) { transform: scale(0.98); }
 
 .btn-danger {
   color: var(--color-danger);
   border-color: rgba(255, 128, 149, 0.34);
   background-color: rgba(255, 128, 149, 0.06);
 }
-.btn-danger:hover:not(:disabled) {
-  background-color: rgba(255, 128, 149, 0.15);
-  border-color: rgba(255, 128, 149, 0.6);
+
+/* Hover solo en dispositivos que lo admiten (en táctil un toque dispara
+   hovers falsos). Igual que hacen las utilidades hover: de Tailwind 4. */
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 18px 40px -12px rgba(255, 204, 51, 0.6);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: rgba(139, 160, 255, 0.16);
+    border-color: rgba(139, 160, 255, 0.6);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--color-accent);
+    border-color: var(--color-border-accent);
+    background-color: rgba(20, 29, 77, 0.75);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background-color: rgba(255, 128, 149, 0.15);
+    border-color: rgba(255, 128, 149, 0.6);
+  }
 }
+
+/* El desplazamiento al pasar el ratón solo con puntero fino y sin
+   preferencia de movimiento reducido. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .btn-primary:hover:not(:disabled),
+  .btn-secondary:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+}
+
+/* Feedback de pulsación: va después de los hovers para prevalecer sobre ellos. */
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 6px 16px -8px rgba(255, 204, 51, 0.6);
+}
+.btn-secondary:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.btn-ghost:active:not(:disabled) { transform: scale(0.98); }
 .btn-danger:active:not(:disabled) { transform: scale(0.98); }
 
 .btn-sm { padding: 0.5rem 1rem; font-size: 0.8125rem; }
@@ -376,15 +447,22 @@ body::after {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 9999px;
-  border: 1px solid var(--color-line);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-muted);
   background-color: rgba(20, 29, 77, 0.55);
-  transition: all 0.25s var(--ease-smooth);
+  /* Antes `all`: el hover cambia color, borde y posición; disabled, opacidad. */
+  transition-property: color, border-color, background-color, transform, opacity;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-out);
 }
-.icon-btn:hover:not(:disabled) {
-  color: var(--color-ink-dark);
-  border-color: var(--color-line-strong);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .icon-btn:hover:not(:disabled) {
+    color: var(--color-accent);
+    border-color: var(--color-border-accent);
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .icon-btn:hover:not(:disabled) { transform: translateY(-1px); }
 }
 .icon-btn:active:not(:disabled) { transform: scale(0.94); }
 .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -392,8 +470,8 @@ body::after {
 /* ====================== COMPONENTES: SUPERFICIES ====================== */
 
 .surface {
-  background-color: color-mix(in oklab, var(--color-card) 82%, transparent);
-  border: 1px solid var(--color-line);
+  background-color: color-mix(in oklab, var(--color-surface) 82%, transparent);
+  border: 1px solid var(--color-border);
   border-radius: 1.5rem;
   box-shadow: var(--shadow-soft);
 }
@@ -405,20 +483,25 @@ body::after {
     rgba(11, 17, 48, 0.72) 100%
   );
   backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-border);
   border-radius: 1.75rem;
   box-shadow: var(--shadow-elevated);
 }
 
 /* Tarjeta con hover elegante (elevación + halo dorado) */
 .card-hover {
-  transition: transform 0.35s var(--ease-smooth), box-shadow 0.35s var(--ease-smooth),
-    border-color 0.35s var(--ease-smooth);
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-out);
 }
-.card-hover:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-line-strong);
-  box-shadow: 0 26px 54px -22px rgba(255, 204, 51, 0.4), var(--shadow-elevated);
+@media (hover: hover) {
+  .card-hover:hover {
+    border-color: var(--color-border-accent);
+    box-shadow: 0 26px 54px -22px rgba(255, 204, 51, 0.4), var(--shadow-elevated);
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card-hover:hover { transform: translateY(-4px); }
 }
 
 /* Borde superior luminoso para secciones destacadas */
@@ -440,16 +523,16 @@ body::after {
   align-items: center;
   gap: 0.4rem;
   border-radius: 9999px;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-border);
   background-color: rgba(139, 160, 255, 0.08);
-  color: var(--color-ink);
+  color: var(--color-fg-muted);
   font-size: 0.75rem;
   padding: 0.3rem 0.75rem;
 }
 .chip-gold {
-  border-color: var(--color-line-strong);
+  border-color: var(--color-border-accent);
   background-color: rgba(255, 204, 51, 0.1);
-  color: var(--color-ink-dark);
+  color: var(--color-accent);
 }
 
 /* Cabecera de sección */
@@ -459,7 +542,7 @@ body::after {
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-royal-light);
+  color: var(--color-secondary);
 }
 
 .section-title {
@@ -467,7 +550,7 @@ body::after {
   font-weight: 700;
   font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
   line-height: 1.1;
-  color: var(--color-ink-strong);
+  color: var(--color-fg);
 }
 
 .title-gold {
@@ -479,7 +562,7 @@ body::after {
 
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-line), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
 }
 
 /* ====================== COMPONENTES: FORMULARIOS ====================== */
@@ -491,26 +574,29 @@ body::after {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-ink);
+  color: var(--color-fg-muted);
   margin-bottom: 0.45rem;
 }
 
 .field {
   width: 100%;
   border-radius: 0.9rem;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-border);
   background-color: rgba(7, 11, 34, 0.55);
-  color: var(--color-ink-strong);
+  color: var(--color-fg);
   padding: 0.7rem 1rem;
   font-size: 0.9375rem;
-  outline: none;
-  transition: border-color 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth),
-    background-color 0.25s var(--ease-smooth);
+  outline: none; /* el foco se muestra con el borde dorado y el anillo de .field:focus */
+  transition-property: border-color, box-shadow, background-color;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-out);
 }
 .field::placeholder { color: rgba(174, 184, 230, 0.5); }
-.field:hover:not(:disabled) { border-color: rgba(139, 160, 255, 0.38); }
+@media (hover: hover) {
+  .field:hover:not(:disabled) { border-color: rgba(139, 160, 255, 0.38); }
+}
 .field:focus {
-  border-color: var(--color-ink-dark);
+  border-color: var(--color-accent);
   background-color: rgba(7, 11, 34, 0.8);
   box-shadow: 0 0 0 3px rgba(255, 204, 51, 0.16);
 }
@@ -523,18 +609,23 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   align-items: center;
   justify-content: center;
   border-radius: 1.25rem;
-  border: 2px dashed var(--color-line);
+  border: 2px dashed var(--color-border);
   background-color: rgba(20, 29, 77, 0.35);
-  color: var(--color-ink);
+  color: var(--color-fg-muted);
   cursor: pointer;
   text-align: center;
   padding: 1.5rem;
-  transition: all 0.25s var(--ease-smooth);
+  /* Antes `all`: el hover solo cambia borde, color y fondo. */
+  transition-property: border-color, color, background-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: ease;
 }
-.dropzone:hover {
-  border-color: var(--color-line-strong);
-  color: var(--color-ink-dark);
-  background-color: rgba(20, 29, 77, 0.6);
+@media (hover: hover) {
+  .dropzone:hover {
+    border-color: var(--color-border-accent);
+    color: var(--color-accent);
+    background-color: rgba(20, 29, 77, 0.6);
+  }
 }
 
 /* Opción tipo radio en píldora */
@@ -543,18 +634,23 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   align-items: center;
   gap: 0.5rem;
   border-radius: 9999px;
-  border: 1px solid var(--color-line);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-muted);
   font-size: 0.875rem;
   padding: 0.5rem 1rem;
   cursor: pointer;
-  transition: all 0.25s var(--ease-smooth);
+  /* Antes `all`: hover y selección solo cambian borde, color y fondo. */
+  transition-property: border-color, color, background-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: ease;
 }
-.pill-option:hover { border-color: rgba(255, 204, 51, 0.45); color: var(--color-ink-strong); }
+@media (hover: hover) {
+  .pill-option:hover { border-color: rgba(255, 204, 51, 0.45); color: var(--color-fg); }
+}
 .pill-option[data-selected="true"] {
-  border-color: var(--color-ink-dark);
+  border-color: var(--color-accent);
   background-color: rgba(255, 204, 51, 0.12);
-  color: var(--color-ink-dark);
+  color: var(--color-accent);
 }
 
 /* ====================== NAVEGACIÓN ==================================== */
@@ -566,16 +662,21 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   border-radius: 0.9rem;
   padding: 0.65rem 0.9rem;
   font-size: 0.9375rem;
-  color: var(--color-ink);
+  color: var(--color-fg-muted);
   position: relative;
-  transition: all 0.25s var(--ease-smooth);
+  /* Antes `all`: hover y estado activo solo cambian color y fondo. */
+  transition-property: color, background-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: ease;
 }
-.nav-link:hover {
-  color: var(--color-ink-strong);
-  background-color: rgba(139, 160, 255, 0.1);
+@media (hover: hover) {
+  .nav-link:hover {
+    color: var(--color-fg);
+    background-color: rgba(139, 160, 255, 0.1);
+  }
 }
 .nav-link[data-active="true"] {
-  color: var(--color-ink-dark);
+  color: var(--color-accent);
   font-weight: 600;
   background-color: rgba(255, 204, 51, 0.1);
 }
@@ -588,7 +689,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   width: 3px;
   height: 1.1rem;
   border-radius: 9999px;
-  background: var(--color-ink-dark);
+  background: var(--color-accent);
   box-shadow: 0 0 12px rgba(255, 204, 51, 0.7);
 }
 
@@ -596,10 +697,14 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
 
 .polaroid-tilt {
   transform: rotate(var(--tilt, 0deg));
-  transition: transform 0.4s var(--ease-smooth), box-shadow 0.4s var(--ease-smooth);
+  transition-property: transform, box-shadow;
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-out);
 }
-.polaroid-tilt:hover {
-  transform: rotate(0deg) translateY(-8px) scale(1.02);
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .polaroid-tilt:hover {
+    transform: rotate(0deg) translateY(-8px) scale(1.02);
+  }
 }
 
 .washi-tape {
@@ -648,9 +753,9 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
 }
 
 .alert-info {
-  border-color: color-mix(in oklab, var(--color-royal-light) 25%, transparent);
-  background: color-mix(in oklab, var(--color-royal-light) 10%, transparent);
-  color: var(--color-ink);
+  border-color: color-mix(in oklab, var(--color-secondary) 25%, transparent);
+  background: color-mix(in oklab, var(--color-secondary) 10%, transparent);
+  color: var(--color-fg-muted);
 }
 
 .form-actions {
@@ -675,13 +780,34 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   .btn { padding: 0.7rem 1.15rem; }
 }
 
+/* Movimiento reducido = menos y más suave, no cero. */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  /* Bucles y keyframes (estrellas, auroras, luna, dragones, skeleton) se
+     muestran directamente en su estado final, sin movimiento. */
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    animation-delay: 0s !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Las entradas se mantienen como un fundido breve, sin desplazamiento. */
+  .fade-in-up {
+    animation-name: fade-in !important;
+    animation-duration: var(--duration-base) !important;
+  }
+
+  /* Se conserva el feedback de color, borde, sombra y opacidad; las
+     transformaciones (incluidas scale/translate de Tailwind y las de dnd-kit)
+     pasan a ser instantáneas. */
+  *,
+  *::before,
+  *::after {
+    transition-property: color, background-color, border-color, outline-color,
+      text-decoration-color, fill, stroke, opacity, box-shadow, filter !important;
   }
 }
