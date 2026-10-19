@@ -1,25 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
+import Field from '../components/ui/Field';
+import StatusMessage from '../components/ui/StatusMessage';
+
+const COPIED_MS = 2000;
 
 export default function ParejaPage() {
   const { refreshToken } = useAuth();
   const [pareja, setPareja] = useState(null);
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [joining, setJoining] = useState(false);
+  const linkRef = useRef(null);
+  const copiedTimer = useRef(null);
 
   useEffect(() => {
+    setError('');
     client
       .get('/pareja/me')
       .then(({ data }) => setPareja(data))
       .catch(() => setError('No se pudo cargar la información de tu pareja'));
-  }, []);
+  }, [reloadKey]);
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), []);
 
   async function handleJoin(e) {
     e.preventDefault();
@@ -30,16 +41,43 @@ export default function ParejaPage() {
       refreshToken(data.token);
       window.location.href = '/pareja';
     } catch (err) {
-      setJoinError(err.response?.data?.error || 'No se pudo unir a esa pareja');
+      setJoinError(err.response?.data?.error || 'No se pudo unir a esa pareja. Revisa el código y vuelve a intentarlo.');
     } finally {
       setJoining(false);
+    }
+  }
+
+  async function handleCopy() {
+    clearTimeout(copiedTimer.current);
+    try {
+      // navigator.clipboard solo existe en contextos seguros (HTTPS o localhost):
+      // abierta por la IP de la red local, no está disponible.
+      await navigator.clipboard.writeText(linkRef.current.value);
+      setCopied(true);
+      setCopyStatus('Link de invitación copiado al portapapeles');
+      copiedTimer.current = setTimeout(() => setCopied(false), COPIED_MS);
+    } catch {
+      linkRef.current?.focus();
+      linkRef.current?.select();
+      setCopied(false);
+      setCopyStatus('No se pudo copiar automáticamente. El link está seleccionado: cópialo desde el menú o con Ctrl+C.');
     }
   }
 
   if (error) {
     return (
       <Layout>
-        <p className="alert alert-danger">{error}</p>
+        <p role="alert" className="alert alert-danger max-w-xl">
+          {error}. Revisa tu conexión y{' '}
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="font-semibold underline underline-offset-4"
+          >
+            vuelve a intentarlo
+          </button>
+          .
+        </p>
       </Layout>
     );
   }
@@ -47,7 +85,8 @@ export default function ParejaPage() {
   if (!pareja) {
     return (
       <Layout>
-        <div className="max-w-md space-y-4">
+        <div className="max-w-md space-y-4" aria-busy="true">
+          <p role="status" className="sr-only">Cargando…</p>
           <div className="skeleton h-56 rounded-3xl" />
           <div className="skeleton h-40 rounded-3xl" />
         </div>
@@ -58,26 +97,18 @@ export default function ParejaPage() {
   const inviteLink = `${window.location.origin}/register?invite=${pareja.inviteCode}`;
   const complete = pareja.members.length >= 2;
 
-  async function handleCopy() {
-    await navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   return (
     <Layout>
-      <PageHeader
-        eyebrow="Nuestro libro"
-        title="Invitar a mi pareja 💌"
-        subtitle="Un solo libro, dos voces contándolo."
-      />
+      <PageHeader title="Invitar a mi pareja" subtitle="Un solo libro, dos voces contándolo." />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ---------- Miembros + invitación ---------- */}
-        <section className="surface surface-accent p-6">
-          <p className="eyebrow mb-3">Quiénes están en este libro</p>
+        <section aria-labelledby="pareja-miembros" className="surface surface-accent p-6">
+          <h2 id="pareja-miembros" className="font-display text-lg font-semibold text-ink-strong">
+            Quiénes están en este libro
+          </h2>
 
-          <ul className="mb-6 flex flex-wrap gap-2">
+          <ul className="mb-6 mt-3 flex flex-wrap gap-2">
             {pareja.members.map((m) => (
               <li key={m.id} className="chip chip-gold">
                 {m.name}
@@ -91,52 +122,73 @@ export default function ParejaPage() {
               : 'Comparte este link con tu pareja para que se una a este mismo libro de citas.'}
           </p>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              readOnly
-              value={inviteLink}
-              aria-label="Link de invitación"
-              className="field flex-1 text-xs sm:text-sm"
-              onFocus={(e) => e.target.select()}
-            />
-            <button onClick={handleCopy} className="btn btn-primary">
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4" strokeWidth={2} />
-                  ¡Copiado!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" strokeWidth={1.75} />
-                  Copiar
-                </>
-              )}
-            </button>
-          </div>
+          <Field label="Link de invitación">
+            {(field) => (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  {...field}
+                  ref={linkRef}
+                  readOnly
+                  value={inviteLink}
+                  className="field min-w-0 flex-1"
+                  onFocus={(e) => e.target.select()}
+                />
+                <button type="button" onClick={handleCopy} className="btn btn-primary">
+                  {copied ? (
+                    <>
+                      <Check aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                      Copiado
+                    </>
+                  ) : (
+                    <>
+                      <Copy aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
+                      Copiar
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </Field>
+          {/* El éxito ya se ve en el botón: se anuncia sin repetirlo; el fallo sí se muestra. */}
+          <StatusMessage className={copied ? 'sr-only' : 'mt-3 text-xs text-ink'}>{copyStatus}</StatusMessage>
         </section>
 
         {/* ---------- Unirse con código ---------- */}
-        <section className="surface p-6">
-          <p className="eyebrow mb-3">¿Ya tienes cuenta?</p>
-          <p className="mb-4 text-sm leading-relaxed text-ink">
+        <section aria-labelledby="pareja-unirse" className="surface p-6">
+          <h2 id="pareja-unirse" className="font-display text-lg font-semibold text-ink-strong">
+            ¿Ya tienes cuenta?
+          </h2>
+          <p className="mb-4 mt-2 text-sm leading-relaxed text-ink">
             Si te registraste antes de tener el código de tu pareja, pega su código de invitación
-            acá para unirte a su mismo libro de citas.
+            para unirte a su mismo libro de citas.
           </p>
 
-          <form onSubmit={handleJoin} className="flex flex-col gap-2 sm:flex-row">
-            <input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-              placeholder="Código de invitación"
-              aria-label="Código de invitación"
-              className="field flex-1"
-            />
-            <button type="submit" disabled={joining || !joinCode.trim()} className="btn btn-secondary">
-              {joining ? 'Uniendo...' : 'Unirme'}
-            </button>
+          <form onSubmit={handleJoin}>
+            <Field label="Código de invitación">
+              {(field) => (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    {...field}
+                    name="inviteCode"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    placeholder="Pega aquí el código…"
+                    className="field min-w-0 flex-1"
+                  />
+                  <button type="submit" disabled={joining || !joinCode.trim()} className="btn btn-secondary">
+                    {joining ? 'Uniendo…' : 'Unirme'}
+                  </button>
+                </div>
+              )}
+            </Field>
           </form>
 
-          {joinError && <p className="alert alert-danger mt-4">{joinError}</p>}
+          <StatusMessage tone="error" className="alert alert-danger mt-4">
+            {joinError}
+          </StatusMessage>
         </section>
       </div>
     </Layout>

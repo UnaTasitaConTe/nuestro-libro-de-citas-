@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#070b22" />
+    <meta name="color-scheme" content="dark" />
+    <script>
+      // Aplica el último tema de temporada antes del primer pintado, para no ver
+      // un instante el tema anterior. ThemeProvider lo recalcula después.
+      try {
+        var tema = localStorage.getItem('nlc:tema-aplicado');
+        if (tema && /^[a-z]+$/.test(tema)) document.documentElement.dataset.season = tema;
+      } catch (e) {}
+    </script>
     <meta
       name="description"
       content="Nuestro Libro de Citas: guarden juntos cada cita, sus fotos y las dos versiones de la misma historia."

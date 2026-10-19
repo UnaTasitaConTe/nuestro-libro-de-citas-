@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
-import EntryFields, { inputClass } from '../components/EntryFields';
-import { REPETIRIAMOS_OPTIONS } from '../constants/repetiriamos';
+import EntryFields, { inputClass, labelClass } from '../components/EntryFields';
+import RepetiriamosField from '../components/RepetiriamosField';
+import Field from '../components/ui/Field';
+import StatusMessage from '../components/ui/StatusMessage';
 
 const emptyEntry = {
   valoracion: 0,
@@ -15,6 +17,8 @@ const emptyEntry = {
   intimidad: false,
 };
 
+const VALORACION_REQUERIDA = 'Elige una valoración de al menos 1 corazón.';
+
 export default function CitaFormPage() {
   const navigate = useNavigate();
   const [nombre, setNombre] = useState('');
@@ -24,14 +28,22 @@ export default function CitaFormPage() {
   const [entry, setEntry] = useState(emptyEntry);
   const [fotos, setFotos] = useState([]);
   const [error, setError] = useState('');
+  const [valoracionError, setValoracionError] = useState('');
   const [loading, setLoading] = useState(false);
+  const ratingRef = useRef(null);
+
+  function updateEntry(next) {
+    setEntry(next);
+    setValoracionError('');
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
 
     if (!entry.valoracion) {
-      setError('Elige una valoración de al menos 1 corazón');
+      setValoracionError(VALORACION_REQUERIDA);
+      ratingRef.current?.querySelector('[role="radio"][tabindex="0"]')?.focus();
       return;
     }
 
@@ -53,7 +65,7 @@ export default function CitaFormPage() {
       const { data } = await client.post('/citas', body);
       navigate(`/citas/${data.id}`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar la cita');
+      setError(err.response?.data?.error || 'No se pudo guardar la cita. Revisa los datos y vuelve a intentarlo.');
     } finally {
       setLoading(false);
     }
@@ -62,97 +74,96 @@ export default function CitaFormPage() {
   return (
     <Layout>
       <PageHeader
-        eyebrow="Nuevo recuerdo"
-        title="Nueva cita ✨"
+        title="Nueva cita"
         subtitle="Cuenta tu versión ahora; tu pareja podrá agregar la suya después."
       />
 
-      {error && <p className="alert alert-danger mb-6">{error}</p>}
-
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <section className="surface p-5 sm:p-6">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="min-w-0">
-              <label className="field-label" htmlFor="cita-nombre">
-                Nombre de la cita
-              </label>
-              <input
-                id="cita-nombre"
-                required
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Nuestra primera cita"
-                className={inputClass}
-              />
-            </div>
+        <section aria-labelledby="cita-datos" className="surface p-5 sm:p-6">
+          <h2 id="cita-datos" className="font-display text-lg font-semibold text-ink-strong">
+            La cita
+          </h2>
+          <p className="mt-1 text-sm text-ink">
+            Se guarda una sola vez para los dos.
+          </p>
 
-            <div className="min-w-0">
-              <label className="field-label" htmlFor="cita-fecha">
-                Fecha
-              </label>
-              <input
-                id="cita-fecha"
-                type="date"
-                required
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <Field label="Nombre de la cita" labelClassName={labelClass} className="min-w-0">
+              {(field) => (
+                <input
+                  {...field}
+                  name="nombre"
+                  required
+                  autoComplete="off"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Nuestra primera cita…"
+                  className={inputClass}
+                />
+              )}
+            </Field>
 
-            <div className="min-w-0">
-              <label className="field-label" htmlFor="cita-lugar">
-                Lugar
-              </label>
-              <input
-                id="cita-lugar"
-                required
-                value={lugar}
-                onChange={(e) => setLugar(e.target.value)}
-                placeholder="¿Dónde fue?"
-                className={inputClass}
-              />
-            </div>
+            <Field label="Fecha" labelClassName={labelClass} className="min-w-0">
+              {(field) => (
+                <input
+                  {...field}
+                  name="fecha"
+                  type="date"
+                  required
+                  value={fecha}
+                  onChange={(e) => setFecha(e.target.value)}
+                  className={inputClass}
+                />
+              )}
+            </Field>
 
-            <div className="min-w-0">
-              <span className="field-label">¿Repetiríamos?</span>
-              <div className="flex flex-wrap gap-2">
-                {REPETIRIAMOS_OPTIONS.map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm transition-all duration-200 ${
-                      repetiriamos === opt.value
-                        ? 'border-ink-dark bg-ink-dark/10 text-ink-dark shadow-[0_0_0_3px_rgba(255,204,51,0.12)]'
-                        : 'border-line text-ink hover:-translate-y-0.5 hover:border-ink-dark/50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="repetiriamos"
-                      value={opt.value}
-                      checked={repetiriamos === opt.value}
-                      onChange={() => setRepetiriamos(opt.value)}
-                      className="accent-[color:var(--color-ink-dark)]"
-                    />
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-            </div>
+            <Field label="Lugar" labelClassName={labelClass} className="min-w-0">
+              {(field) => (
+                <input
+                  {...field}
+                  name="lugar"
+                  required
+                  autoComplete="off"
+                  value={lugar}
+                  onChange={(e) => setLugar(e.target.value)}
+                  placeholder="El café de la esquina…"
+                  className={inputClass}
+                />
+              )}
+            </Field>
+
+            <RepetiriamosField value={repetiriamos} onChange={setRepetiriamos} legendClassName={labelClass} />
           </div>
         </section>
 
-        <p className="alert alert-info">
-          Nombre, fecha, lugar y "¿repetiríamos?" se guardan una sola vez para toda la cita. Lo
-          demás es tu propia versión — tu pareja podrá agregar la suya después.
-        </p>
+        <section aria-labelledby="cita-version" className="surface p-5 sm:p-6">
+          <h2 id="cita-version" className="font-display text-lg font-semibold text-ink-strong">
+            Tu versión
+          </h2>
+          <p className="mb-5 mt-1 text-sm text-ink">
+            Solo la tuya: tu pareja contará la suya después.
+          </p>
+          <EntryFields
+            entry={entry}
+            setEntry={updateEntry}
+            fotos={fotos}
+            setFotos={setFotos}
+            valoracionError={valoracionError}
+            ratingRef={ratingRef}
+          />
+        </section>
 
-        <EntryFields entry={entry} setEntry={setEntry} fotos={fotos} setFotos={setFotos} />
+        <StatusMessage tone="error" className="alert alert-danger">
+          {error}
+        </StatusMessage>
 
         <div className="form-actions">
           <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
-            {loading ? 'Guardando...' : 'Guardar cita'}
+            {loading ? 'Guardando…' : 'Guardar cita'}
           </button>
+          <Link to="/" className="btn btn-ghost btn-lg">
+            Cancelar
+          </Link>
         </div>
       </form>
     </Layout>

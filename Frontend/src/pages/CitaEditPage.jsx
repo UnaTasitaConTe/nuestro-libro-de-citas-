@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import client from '../api/client';
 import Layout from '../components/Layout';
-import { inputClass } from '../components/EntryFields';
-import { REPETIRIAMOS_OPTIONS } from '../constants/repetiriamos';
+import PageHeader from '../components/PageHeader';
+import { inputClass, labelClass } from '../components/EntryFields';
+import RepetiriamosField from '../components/RepetiriamosField';
+import Field from '../components/ui/Field';
+import StatusMessage from '../components/ui/StatusMessage';
 
 export default function CitaEditPage() {
   const { id } = useParams();
@@ -13,6 +16,7 @@ export default function CitaEditPage() {
   const [fecha, setFecha] = useState('');
   const [lugar, setLugar] = useState('');
   const [repetiriamos, setRepetiriamos] = useState('SI');
+  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,6 +29,7 @@ export default function CitaEditPage() {
         setFecha(data.fecha.slice(0, 10));
         setLugar(data.lugar);
         setRepetiriamos(data.repetiriamos);
+        setLoaded(true);
       })
       .catch(() => setLoadError('No se pudo cargar la cita'));
   }, [id]);
@@ -37,7 +42,7 @@ export default function CitaEditPage() {
       await client.patch(`/citas/${id}`, { nombre, fecha, lugar, repetiriamos });
       navigate(`/citas/${id}`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar los cambios');
+      setError(err.response?.data?.error || 'No se pudieron guardar los cambios. Vuelve a intentarlo.');
     } finally {
       setLoading(false);
     }
@@ -46,87 +51,97 @@ export default function CitaEditPage() {
   if (loadError) {
     return (
       <Layout>
-        <p className="text-red-400">{loadError}</p>
+        <div className="mx-auto max-w-xl">
+          <p role="alert" className="alert alert-danger">
+            {loadError}. Revisa tu conexión y vuelve a intentarlo.
+          </p>
+          <Link to={`/citas/${id}`} className="btn btn-ghost btn-sm mt-4">
+            Volver a la cita
+          </Link>
+        </div>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <h2 className="font-display text-xl sm:text-2xl mb-6 text-ink-dark">Editar cita ✏️</h2>
+      <PageHeader title="Editar cita" subtitle="Cambia los datos que comparten los dos." />
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-xl">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm mb-1 text-ink">Nombre de la cita</label>
-            <input
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 text-ink">Fecha</label>
-            <input
-              type="date"
-              required
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 text-ink">Lugar</label>
-            <input required value={lugar} onChange={(e) => setLugar(e.target.value)} className={inputClass} />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 text-ink">¿Repetiríamos?</label>
-            <div className="flex flex-wrap gap-2">
-              {REPETIRIAMOS_OPTIONS.map((opt) => (
-                <label
-                  key={opt.value}
-                  className={`flex items-center gap-2 text-sm rounded-full border px-3 py-1.5 cursor-pointer transition-colors ${
-                    repetiriamos === opt.value
-                      ? 'border-ink-dark bg-ink-dark/10 text-ink-dark'
-                      : 'border-line text-ink hover:border-ink-dark/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="repetiriamos"
-                    value={opt.value}
-                    checked={repetiriamos === opt.value}
-                    onChange={() => setRepetiriamos(opt.value)}
-                    className="accent-[color:var(--color-ink-dark)]"
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
+      {!loaded ? (
+        <div className="max-w-xl space-y-4" aria-busy="true">
+          <p role="status" className="sr-only">Cargando la cita…</p>
+          <div className="skeleton h-64 rounded-3xl" />
         </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-6">
+          <div className="surface grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+            <Field label="Nombre de la cita" labelClassName={labelClass} className="min-w-0">
+              {(field) => (
+                <input
+                  {...field}
+                  name="nombre"
+                  required
+                  autoComplete="off"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  className={inputClass}
+                />
+              )}
+            </Field>
 
-        <p className="text-sm text-ink rounded-xl bg-royal-light/10 border border-royal-light/20 px-4 py-3">
-          Esto solo cambia los datos compartidos de la cita. Las versiones personales de cada quien
-          se editan desde "editar mi versión".
-        </p>
+            <Field label="Fecha" labelClassName={labelClass} className="min-w-0">
+              {(field) => (
+                <input
+                  {...field}
+                  name="fecha"
+                  type="date"
+                  required
+                  value={fecha}
+                  onChange={(e) => setFecha(e.target.value)}
+                  className={inputClass}
+                />
+              )}
+            </Field>
 
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-full bg-gradient-to-r from-ink-dark to-amber-400 text-paper font-display font-semibold px-8 py-2.5 shadow-[0_4px_20px_rgba(255,204,51,0.35)] hover:shadow-[0_4px_28px_rgba(255,204,51,0.5)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all"
-          >
-            {loading ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
-      </form>
+            <Field label="Lugar" labelClassName={labelClass} className="min-w-0">
+              {(field) => (
+                <input
+                  {...field}
+                  name="lugar"
+                  required
+                  autoComplete="off"
+                  value={lugar}
+                  onChange={(e) => setLugar(e.target.value)}
+                  className={inputClass}
+                />
+              )}
+            </Field>
+
+            <RepetiriamosField value={repetiriamos} onChange={setRepetiriamos} legendClassName={labelClass} />
+          </div>
+
+          <p className="alert alert-info">
+            Esto solo cambia los datos compartidos de la cita. Cada versión personal se edita desde{' '}
+            <Link to={`/citas/${id}/mi-entrada`} className="font-semibold text-royal-light underline underline-offset-4">
+              Editar mi versión
+            </Link>
+            .
+          </p>
+
+          <StatusMessage tone="error" className="alert alert-danger">
+            {error}
+          </StatusMessage>
+
+          <div className="form-actions">
+            <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
+              {loading ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+            <Link to={`/citas/${id}`} className="btn btn-ghost btn-lg">
+              Cancelar
+            </Link>
+          </div>
+        </form>
+      )}
     </Layout>
   );
 }
