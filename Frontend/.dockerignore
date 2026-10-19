@@ -1,2 +1,34 @@
+# Dependencias y builds locales (la imagen instala y construye las suyas)
 node_modules
 dist
+dist-ssr
+*.local
+
+# Pruebas: unitarias (Vitest) y E2E (Playwright); no forman parte del build
+e2e
+playwright.config.js
+test-results
+playwright-report
+blob-report
+coverage
+src/test
+**/*.test.js
+**/*.test.jsx
+
+# Secretos y configuración local
+.env
+.env.*
+
+# Control de versiones, editor, documentación y logs
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.log
+docs
+*.md
+
+# Archivos de Docker
+Dockerfile
+.dockerignore
