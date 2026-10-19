@@ -11,7 +11,7 @@ const TILTS = [-4, 3, -2, 4, -3, 2];
  * funcionan con el foco dentro del carrusel. Las fotos laterales son un atajo
  * para ratón y táctil (aria-hidden): su función ya la cubren flechas y puntos.
  */
-export default function Carousel({ photos, alt, onDelete, label = 'Fotos' }) {
+export default function Carousel({ photos, alt, onDelete, label = 'Carrusel de fotos' }) {
   const [index, setIndex] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
@@ -90,8 +90,15 @@ export default function Carousel({ photos, alt, onDelete, label = 'Fotos' }) {
               <div className="aspect-square overflow-hidden bg-polaroid-mat">
                 <img src={thumbSrc(p)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
               </div>
+              {/* El autor solo en la foto central: en las laterales (decorativas y
+                  semitransparentes) el texto no alcanzaría el contraste mínimo. */}
               {p.authorName && (
-                <p className="mt-2 text-center font-hand text-lg leading-none text-polaroid-ink">{p.authorName}</p>
+                <p
+                  aria-hidden={!isCenter || undefined}
+                  className={`mt-2 text-center font-hand text-lg leading-none text-polaroid-ink ${isCenter ? '' : 'invisible'}`}
+                >
+                  {p.authorName}
+                </p>
               )}
             </div>
           );
@@ -124,7 +131,8 @@ export default function Carousel({ photos, alt, onDelete, label = 'Fotos' }) {
               <button
                 type="button"
                 onClick={() => setLightbox(true)}
-                aria-label={`Ampliar ${position.toLowerCase()}`}
+                // Incluye el texto visible (el autor) en el nombre accesible (WCAG 2.5.3).
+                aria-label={`Ampliar ${position.toLowerCase()}${p.authorName ? `, de ${p.authorName}` : ''}`}
                 className="block w-full cursor-zoom-in rounded-md text-left"
               >
                 {polaroid}
@@ -173,13 +181,16 @@ export default function Carousel({ photos, alt, onDelete, label = 'Fotos' }) {
                   }}
                   aria-label={`Ir a foto ${i + 1}`}
                   aria-current={i === safeIndex ? 'true' : undefined}
-                  className="group/dot flex h-7 items-center px-1 pointer-coarse:h-9"
+                  // Área mínima de 24×24 px (WCAG 2.5.8); el punto visual sigue siendo de 6 px.
+                  className="group/dot flex h-7 min-w-6 items-center justify-center px-1 pointer-coarse:h-9"
                 >
                   {/* Punto visual de 6 px dentro de un área pulsable mayor. */}
+                  {/* Ancho fijo de 20 px; el inactivo se encoge con scaleX (6 px): se anima
+                      transform en el compositor, no width. */}
                   <span
                     aria-hidden="true"
-                    className={`block h-1.5 rounded-full transition-[width,background-color] duration-200 ${
-                      i === safeIndex ? 'w-5 bg-ink-dark' : 'w-1.5 bg-ink/40 group-hover/dot:bg-ink/70'
+                    className={`block h-1.5 w-5 rounded-full transition-[scale,background-color] duration-200 ${
+                      i === safeIndex ? 'bg-ink-dark' : 'scale-x-30 bg-ink/40 group-hover/dot:bg-ink/70'
                     }`}
                   />
                 </button>

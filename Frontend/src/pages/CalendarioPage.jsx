@@ -158,7 +158,8 @@ export default function CalendarioPage() {
 
   const monthName = getMonthName(month);
   const weeks = getCalendarWeeks(year, month);
-  const summary = loading
+  // Con error no hay resumen: anunciaría "sin citas" junto a la alerta de fallo.
+  const summary = loading || error
     ? ''
     : `${monthName} de ${year}: ${citas.length === 0 ? 'sin citas' : citas.length === 1 ? '1 cita' : `${citas.length} citas`}`;
 

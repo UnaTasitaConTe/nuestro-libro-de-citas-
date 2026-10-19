@@ -31,8 +31,10 @@ const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 export default function NightSkyBackground() {
   // Sin ThemeProvider, el contexto vale el tema predeterminado (themeContext.js).
-  const { decor } = useSeasonTheme().activeTheme;
-  const flyer = decor.volador;
+  const { activeTheme, skyMotion } = useSeasonTheme();
+  const { decor } = activeTheme;
+  // «Animar el fondo» desactivado: ni voladores ni nevada.
+  const flyer = skyMotion ? decor.volador : null;
 
   const [flight, setFlight] = useState(0); // número del vuelo en curso; 0 = ninguno todavía
   const [flying, setFlying] = useState(false);
@@ -92,7 +94,7 @@ export default function NightSkyBackground() {
 
       <div className="moon-glow" />
 
-      {decor.nevada && (
+      {decor.nevada && skyMotion && (
         <div className="snowfall">
           <div className="snowfall-layer" />
         </div>

@@ -6,6 +6,7 @@
 
 export const PREFERENCE_KEY = 'nlc:tema'; // 'auto' | id de tema, elegido por la persona
 export const APPLIED_KEY = 'nlc:tema-aplicado'; // último tema aplicado (lo lee index.html al arrancar)
+export const SKY_MOTION_KEY = 'nlc:animar-fondo'; // 'si' | 'no': animaciones decorativas del fondo
 
 export function readStorage(key) {
   try {

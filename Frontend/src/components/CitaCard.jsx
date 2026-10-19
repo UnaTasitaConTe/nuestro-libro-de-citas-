@@ -42,7 +42,7 @@ export default function CitaCard({ cita, headingLevel = 'h2' }) {
             alt=""
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 ease-out motion-safe:group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

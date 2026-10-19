@@ -65,7 +65,7 @@ function Brand({ collapsed = false, onNavigate, compact = false }) {
     >
       <DragonIcon className="h-10 w-10 shrink-0 drop-shadow-glow transition-transform duration-300 group-hover:scale-105" />
       {!collapsed && (
-        <span className="min-w-0">
+        <span className="min-w-0" translate="no">
           <span className="block font-display text-[0.95rem] font-semibold leading-tight text-ink-strong">
             Nuestro Libro
           </span>
@@ -184,7 +184,7 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
 
       {/* ---------- Sidebar escritorio ---------- */}
       <aside
-        className={`z-20 hidden border-r border-line bg-paper/70 backdrop-blur-xl transition-[width] duration-300 md:fixed md:inset-y-0 md:left-0 md:flex md:flex-col ${
+        className={`z-20 hidden border-r border-line bg-paper/70 backdrop-blur-xl md:fixed md:inset-y-0 md:left-0 md:flex md:flex-col ${
           collapsed ? 'md:w-20' : 'md:w-72'
         }`}
       >

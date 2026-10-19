@@ -125,4 +125,11 @@ describe('CalendarioPage', () => {
     expect(client.get).toHaveBeenCalledTimes(2);
     expect(await screen.findByRole('link', { name: /25 de agosto/ })).toBeInTheDocument();
   });
+
+  it('con error no anuncia «sin citas» a la vez que la alerta', async () => {
+    client.get.mockRejectedValue(new Error('red'));
+    renderPage('/calendario?mes=2026-08');
+    await screen.findByRole('alert');
+    expect(screen.getAllByRole('status').some((s) => /sin citas/.test(s.textContent))).toBe(false);
+  });
 });

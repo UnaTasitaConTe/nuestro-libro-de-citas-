@@ -36,7 +36,7 @@ describe('GaleriaPage: visor de fotos', () => {
   });
 
   async function openFirst(user) {
-    const thumbs = await screen.findAllByRole('button', { name: 'Ampliar foto de Picnic, 2 de mayo de 2026' });
+    const thumbs = await screen.findAllByRole('button', { name: 'Ampliar foto de Picnic 2 de mayo de 2026' });
     await user.click(thumbs[0]);
     return { trigger: thumbs[0], viewer: screen.getByRole('dialog', { name: 'Visor de fotos' }) };
   }
@@ -103,7 +103,7 @@ describe('GaleriaPage: estados', () => {
     renderPage();
     const list = await screen.findByRole('list', { name: 'Fotos' });
     expect(within(list).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(list).getByRole('button', { name: 'Ampliar foto de Museo, 10 de junio de 2026' })).toBeInTheDocument();
+    expect(within(list).getByRole('button', { name: 'Ampliar foto de Museo 10 de junio de 2026' })).toBeInTheDocument();
     expect(screen.getAllByRole('status').some((s) => s.textContent === '2 fotos')).toBe(true);
   });
 

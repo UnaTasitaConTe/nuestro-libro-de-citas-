@@ -15,6 +15,7 @@ import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import BacklogColumn from '../components/BacklogColumn';
 import StatusMessage from '../components/ui/StatusMessage';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { IDEA_ESTADOS } from '../constants/ideaEstado';
 
 const ESTADO_LABEL = Object.fromEntries(IDEA_ESTADOS.map(({ key, label }) => [key, label]));
@@ -35,6 +36,9 @@ export default function BacklogPage() {
   const [nuevoTitulo, setNuevoTitulo] = useState('');
   const [creating, setCreating] = useState(false);
   const [activeIdea, setActiveIdea] = useState(null);
+  const [ideaToDelete, setIdeaToDelete] = useState(null);
+  // Título aparte: se mantiene durante la animación de cierre del diálogo.
+  const [deleteTitle, setDeleteTitle] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -122,6 +126,18 @@ export default function BacklogPage() {
       setActionError(err.response?.data?.error || 'No se pudieron guardar los cambios de la idea.');
       fetchIdeas({ silent: true });
     }
+  }
+
+  // Borrar ya no es inmediato: se confirma antes (misma petición después).
+  function askDelete(id) {
+    setDeleteTitle(titleOf(id));
+    setIdeaToDelete(id);
+  }
+
+  async function confirmDelete() {
+    const id = ideaToDelete;
+    setIdeaToDelete(null);
+    await handleDelete(id);
   }
 
   async function handleDelete(id) {
@@ -284,7 +300,7 @@ export default function BacklogPage() {
                 label={label}
                 ideas={ideas.filter((i) => i.estado === key).sort((a, b) => a.orden - b.orden)}
                 onSave={handleSave}
-                onDelete={handleDelete}
+                onDelete={askDelete}
                 onMove={handleMoveSelect}
               />
             ))}
@@ -299,6 +315,16 @@ export default function BacklogPage() {
           </DragOverlay>
         </DndContext>
       )}
+
+      <ConfirmDialog
+        open={ideaToDelete !== null}
+        title="¿Borrar esta idea?"
+        description={`Se borrará «${deleteTitle}» del backlog. No se puede deshacer.`}
+        confirmLabel="Borrar idea"
+        busyLabel="Borrando…"
+        onConfirm={confirmDelete}
+        onCancel={() => setIdeaToDelete(null)}
+      />
     </Layout>
   );
 }

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
+import DataMemoryRouter from '../test/DataMemoryRouter';
 import { AuthProvider } from '../context/AuthContext';
 import client from '../api/client';
 import CitaEditPage from './CitaEditPage';
@@ -17,12 +18,12 @@ function renderPage() {
   localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Ana', role: 'ADMIN' }));
   return render(
     <AuthProvider>
-      <MemoryRouter initialEntries={['/citas/1/editar']}>
+      <DataMemoryRouter initialEntries={['/citas/1/editar']}>
         <Routes>
           <Route path="/citas/:id/editar" element={<CitaEditPage />} />
           <Route path="/citas/:id" element={<p>Detalle de la cita</p>} />
         </Routes>
-      </MemoryRouter>
+      </DataMemoryRouter>
     </AuthProvider>
   );
 }
@@ -83,5 +84,69 @@ describe('CitaEditPage', () => {
     renderPage();
     expect(screen.getByRole('heading', { level: 1, name: 'Editar cita' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Editar mi versión' })).toHaveAttribute('href', '/citas/1/mi-entrada');
+  });
+});
+
+describe('CitaEditPage: cambios sin guardar', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    client.get.mockResolvedValue({ data: CITA });
+  });
+
+  it('sin cambios, «Cancelar» sale directamente', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByLabelText('Nombre de la cita');
+    await user.click(screen.getByRole('link', { name: 'Cancelar' }));
+    expect(await screen.findByText('Detalle de la cita')).toBeInTheDocument();
+  });
+
+  it('con cambios, salir pide confirmación; «Seguir editando» conserva lo escrito', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const nombre = await screen.findByLabelText('Nombre de la cita');
+    await user.type(nombre, ' al atardecer');
+
+    await user.click(screen.getByRole('link', { name: 'Cancelar' }));
+    const dialog = await screen.findByRole('alertdialog', { name: '¿Salir sin guardar?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Seguir editando' }));
+
+    await waitFor(() => expect(dialog.open).toBe(false));
+    expect(screen.getByLabelText('Nombre de la cita')).toHaveValue('Picnic al atardecer');
+    expect(screen.queryByText('Detalle de la cita')).not.toBeInTheDocument();
+  });
+
+  it('«Salir sin guardar» continúa la navegación', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.type(await screen.findByLabelText('Lugar'), ' central');
+
+    await user.click(screen.getByRole('link', { name: 'Cancelar' }));
+    const dialog = await screen.findByRole('alertdialog', { name: '¿Salir sin guardar?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Salir sin guardar' }));
+
+    expect(await screen.findByText('Detalle de la cita')).toBeInTheDocument();
+  });
+
+  it('después de guardar no pregunta', async () => {
+    const user = userEvent.setup();
+    client.patch.mockResolvedValue({});
+    renderPage();
+    await user.type(await screen.findByLabelText('Lugar'), ' central');
+
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(await screen.findByText('Detalle de la cita')).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog', { name: '¿Salir sin guardar?' })).not.toBeInTheDocument();
+  });
+
+  it('con cambios, recargar o cerrar la pestaña muestra el aviso del navegador', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.type(await screen.findByLabelText('Lugar'), ' central');
+
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
   });
 });
