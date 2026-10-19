@@ -2,6 +2,7 @@
  * Script para generar thumbnails de fotos existentes que no lo tienen.
  *
  * Uso: node src/scripts/generateThumbnails.js
+ *      node src/scripts/generateThumbnails.js --all   (regenera también las que ya tienen thumbnail)
  *
  * Procesa de a UNA foto a la vez para no saturar la memoria del servidor.
  */
@@ -12,12 +13,17 @@ const ThumbnailService = require('../adapters/filesystem/ThumbnailService');
 
 const rootDir = path.join(__dirname, '..', '..');
 const thumbnailService = new ThumbnailService({ rootDir });
+const regenerateAll = process.argv.includes('--all');
 
 async function run() {
-  console.log('Generando thumbnails para fotos existentes...\n');
+  console.log(regenerateAll
+    ? 'Regenerando thumbnails de TODAS las fotos...\n'
+    : 'Generando thumbnails para fotos existentes...\n');
 
   const { rows: photos } = await pool.query(
-    'SELECT id, foto_url FROM entry_photos WHERE thumb_url IS NULL ORDER BY id'
+    regenerateAll
+      ? 'SELECT id, foto_url FROM entry_photos ORDER BY id'
+      : 'SELECT id, foto_url FROM entry_photos WHERE thumb_url IS NULL ORDER BY id'
   );
 
   if (!photos.length) {

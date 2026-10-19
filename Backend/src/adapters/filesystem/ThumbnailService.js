@@ -31,6 +31,7 @@ class ThumbnailService {
 
     try {
       await sharp(inputPath)
+        .rotate()
         .resize(THUMB_WIDTH, null, { withoutEnlargement: true })
         .webp({ quality: THUMB_QUALITY })
         .toFile(outputPath);
