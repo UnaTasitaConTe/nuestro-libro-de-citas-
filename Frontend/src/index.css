@@ -776,6 +776,12 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
     transform: rotate(0deg) translateY(-8px) scale(1.02);
   }
 }
+/* Con teclado, la polaroid enfocada se endereza igual que al pasar el ratón. */
+@media (prefers-reduced-motion: no-preference) {
+  .polaroid-tilt:has(:focus-visible) {
+    transform: rotate(0deg) translateY(-8px) scale(1.02);
+  }
+}
 
 .washi-tape {
   position: absolute;

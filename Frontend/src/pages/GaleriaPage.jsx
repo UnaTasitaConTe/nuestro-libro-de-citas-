@@ -9,6 +9,7 @@ import Lightbox from '../components/ui/Lightbox';
 import StatusMessage from '../components/ui/StatusMessage';
 import usePageParam from '../hooks/usePageParam';
 import { formatFecha } from '../utils/date';
+import { scrollToTop } from '../utils/scroll';
 
 const PAGE_SIZE = 24;
 const countFormat = new Intl.NumberFormat('es');
@@ -97,8 +98,7 @@ export default function GaleriaPage() {
   function goToPage(p) {
     setPage(p);
     setLightboxOpen(false);
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    scrollToTop();
   }
 
   const openLightbox = useCallback((idx) => {
