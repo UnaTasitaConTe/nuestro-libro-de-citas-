@@ -288,3 +288,29 @@ Fecha: 2026-10-19 · Rama: `rediseno-ui` · **Sin commit**. Rutas, API y lógica
 - La luna se transparenta a través de los botones de fondo casi transparente en el detalle de la cita (escritorio) → etapa 4.
 - `EntryFields` sigue llamando a `URL.createObjectURL` en cada render sin liberarlo → etapa 4.
 - `BacklogPage` borra ideas sin confirmación (no usaba `confirm()`; no se ha añadido para no cambiar el comportamiento).
+
+---
+
+# Capas CSS (`@layer base` / `@layer components`)
+
+Fecha: 2026-10-19 · Rama: `rediseno-ui`.
+
+**Problema**: las reglas propias de `src/index.css` no estaban en ninguna capa, así que ganaban siempre a las utilidades de Tailwind 4 (que van en `@layer utilities`). Varias utilidades del JSX nunca tuvieron efecto, y en la etapa 4 hubo que esquivarlo tres veces (fuente de un `<h2>`, hover de una lista `.surface`, tamaño de `.icon-btn`).
+
+**Cambio**: estilos de elementos (`html`, `body`, `h1–h4`, foco, scrollbars, estrellas) → `@layer base`; clases propias (`.btn`, `.icon-btn`, `.surface`, `.field`, `.chip`, `.nav-link`, drawer, diálogos, polaroids, fondo…) → `@layer components`. `@theme`, `:root` y `@keyframes` no cambian. La regla de `prefers-reduced-motion` queda **sin capa a propósito**: su `!important` sigue imponiéndose.
+
+**Verificación**: estilos calculados (39 propiedades) de todos los elementos de 11 pantallas, en escritorio y móvil, antes y después (Chrome, API simulada en el navegador). Causas raíz de las diferencias:
+
+| Elemento | Cambio | Decisión |
+|---|---|---|
+| Botón colapsar barra lateral (escritorio) | 36 → 28 px, fondo sólido (`h-7 w-7 bg-card`) | Aceptado: era la intención del código |
+| «Borrar foto» del Carousel | rojo y 32 px (`text-danger border-danger/40 bg-paper h-8 w-8`) | Aceptado: identifica la acción destructiva |
+| Flechas del Carousel | `bg-paper/85`, transición de 300 ms | Aceptado |
+| Recordatorio, calendario, lista del calendario | radio `rounded-2xl` / `rounded-xl` (antes 24 px de `.surface`) | Aceptado |
+| Backlog: títulos de columna y contadores | `tracking-widest`, `text-[11px] px-2` | Aceptado (pantalla pendiente de rediseño) |
+| Pareja: link de invitación | 15 → 12 px (`text-xs`) | **Revertido**: se quitan esas utilidades (iOS hace zoom en campos < 16 px y 12 px se lee mal) |
+| Chips del pie (hover) | `hover:text-ink-dark` ahora funciona | Aceptado |
+
+Además, en `BacklogCard` se quita `outline-none` de los dos campos de edición en línea: con las capas, esa utilidad habría anulado el contorno de foco de la regla base.
+
+Login, registro, álbum, Galería y formularios: sin ninguna diferencia. Pruebas 77/77, lint igual que antes.

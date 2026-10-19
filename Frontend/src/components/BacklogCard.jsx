@@ -52,7 +52,7 @@ export default function BacklogCard({ idea, onSave, onDelete }) {
                 onChange={(e) => setTitulo(e.target.value)}
                 onBlur={save}
                 onKeyDown={(e) => e.key === 'Enter' && save()}
-                className="w-full border-b border-line bg-transparent pb-1 font-hand text-xl text-ink-dark outline-none focus:border-ink-dark"
+                className="w-full border-b border-line bg-transparent pb-1 font-hand text-xl text-ink-dark focus:border-ink-dark"
               />
               <textarea
                 value={descripcion}
@@ -60,7 +60,7 @@ export default function BacklogCard({ idea, onSave, onDelete }) {
                 onBlur={save}
                 placeholder="Descripción (opcional)"
                 rows={2}
-                className="w-full resize-none border-b border-line bg-transparent pb-1 text-xs text-ink outline-none focus:border-ink-dark"
+                className="w-full resize-none border-b border-line bg-transparent pb-1 text-xs text-ink focus:border-ink-dark"
               />
             </div>
           ) : (

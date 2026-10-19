@@ -138,11 +138,19 @@
   100% { background-position: 200% 50%; }
 }
 
-.fade-in-up {
-  animation: card-in 0.55s var(--ease-out) both;
+@layer components {
+  .fade-in-up {
+    animation: card-in 0.55s var(--ease-out) both;
+  }
 }
 
 /* ============================ BASE ==================================== */
+
+/* Capas: los estilos de elementos van en `base` y las clases propias en
+   `components`, por debajo de `utilities`. Así una utilidad de Tailwind puesta
+   en el JSX (p. ej. font-hand en un <h2>, h-7 en un .icon-btn) gana a estas
+   reglas, como espera Tailwind 4. Antes, al no tener capa, las anulaban siempre. */
+@layer base {
 
 html {
   color-scheme: dark; /* controles nativos (fecha, scrollbars) en oscuro */
@@ -245,6 +253,9 @@ body::after {
   position: relative;
   z-index: 1;
 }
+} /* fin @layer base */
+
+@layer components {
 
 /* Aurora estática: las tres manchas (verde, violeta y dorada) que antes eran
    elementos animados con blur(70px) y mix-blend-mode en una sola capa de
@@ -831,7 +842,10 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   .btn { padding: 0.7rem 1.15rem; }
 }
 
-/* Movimiento reducido = menos y más suave, no cero. */
+} /* fin @layer components */
+
+/* Movimiento reducido = menos y más suave, no cero. Sin capa a propósito: su
+   !important debe imponerse a cualquier regla de animación o transición. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 

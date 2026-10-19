@@ -97,7 +97,7 @@ export default function ParejaPage() {
               readOnly
               value={inviteLink}
               aria-label="Link de invitación"
-              className="field flex-1 text-xs sm:text-sm"
+              className="field flex-1"
               onFocus={(e) => e.target.select()}
             />
             <button onClick={handleCopy} className="btn btn-primary">
