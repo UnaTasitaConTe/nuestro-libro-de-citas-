@@ -1,4 +1,5 @@
 import DragonIcon from './DragonIcon';
+import SkyMotionToggle from './SkyMotionToggle';
 
 /**
  * Estructura común de Login y Registro: presentación a un lado y formulario al
@@ -29,6 +30,8 @@ export default function AuthLayout({ title, intro, aside, formTitle, formIntro, 
           {formIntro}
           {children}
         </div>
+        {/* Login y Registro no tienen barra lateral: el control del fondo va aquí. */}
+        <SkyMotionToggle className="mx-auto mt-4 w-fit" />
       </section>
     </main>
   );

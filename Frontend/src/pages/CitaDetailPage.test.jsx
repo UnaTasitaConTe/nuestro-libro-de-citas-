@@ -248,6 +248,7 @@ describe('CitaDetailPage: estructura y accesibilidad', () => {
     client.get.mockRejectedValue(new Error('red'));
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar la cita');
+    expect(screen.getByRole('heading', { level: 1, name: 'Cita no disponible' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument();
   });
 });

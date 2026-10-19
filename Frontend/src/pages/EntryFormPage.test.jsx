@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
+import DataMemoryRouter from '../test/DataMemoryRouter';
 import { AuthProvider } from '../context/AuthContext';
 import client from '../api/client';
 import EntryFormPage from './EntryFormPage';
@@ -41,11 +42,11 @@ function renderPage() {
   localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Ana', role: 'USER' }));
   return render(
     <AuthProvider>
-      <MemoryRouter initialEntries={['/citas/1/mi-entrada']}>
+      <DataMemoryRouter initialEntries={['/citas/1/mi-entrada']}>
         <Routes>
           <Route path="/citas/:id/mi-entrada" element={<EntryFormPage />} />
         </Routes>
-      </MemoryRouter>
+      </DataMemoryRouter>
     </AuthProvider>
   );
 }

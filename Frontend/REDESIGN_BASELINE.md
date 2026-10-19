@@ -395,3 +395,75 @@ Rama: `temas-estacionales` (desde `rediseno-ui`). Noche estrellada sigue siendo 
 - Las calabazas y la nieve del horizonte viven en el fondo fijo: el contenido y el pie las tapan en buena parte de las pantallas, como al propio horizonte.
 - El primer acceso de un dispositivo, antes de que exista `nlc:tema-aplicado`, puede mostrar un instante el tema predeterminado.
 - El selector no está en Login y Registro (no tienen barra lateral); allí se aplica la preferencia guardada o el tema automático.
+
+---
+
+# Etapa 5 — Auditoría final
+
+Rama `temas-estacionales`. Sin cambios de backend, API, autenticación ni permisos.
+
+## Herramientas realmente ejecutadas
+
+| Herramienta | Cómo | Resultado |
+|---|---|---|
+| web-design-guidelines | Reglas descargadas de nuevo y revisión del código (búsquedas por regla + lectura) | Hallazgos abajo |
+| review-animations / animate | Inventario de todas las transiciones y animaciones contra los 10 estándares | Hallazgos abajo |
+| axe-core 4.14.0 | Descargado en una carpeta temporal (**no instalado en el proyecto**) e inyectado en Chrome headless; WCAG 2.0/2.1/2.2 A/AA + buenas prácticas | Antes: 5 reglas, 44 violaciones en 20 contextos → después: **0** |
+| Recorrido con Tab | Script propio en Chrome: foco visible y no tapado en 11 pantallas × 4 anchos | Antes: 9 contextos con foco tapado → después: **0** |
+| Unitarias (Vitest) | `pnpm test` | 130/130 |
+| E2E | **No existen** en el repositorio. Playwright y @axe-core/playwright son compatibles (Node 22.13; `@playwright/test` 1.64.1 pide ≥20, `@axe-core/playwright` 4.14.0 pide ≥22.12); no se han instalado | — |
+| Lector de pantalla real (NVDA/VoiceOver) | **No ejecutado**; se verificó semántica con axe y con pruebas de roles/nombres | — |
+
+Contextos de axe: 11 pantallas × 5 temas a 1440 px; 11 pantallas a 375/768/1024 px; estados de error, vacío y carga en 6 pantallas.
+
+## Hallazgos corregidos
+
+| Severidad | Archivo:línea | Hallazgo | Corrección | Verificación |
+|---|---|---|---|---|
+| Alta (WCAG 2.2.2, A) | src/components/ThemeSelect.jsx:59, src/index.css:450 | Parpadeo, luna y nevada: movimiento >5 s junto al contenido sin control para pausarlo | Casilla «Animar el fondo» (persistente, `nlc:animar-fondo`, también aplicada antes del primer pintado) | ThemeProvider.test (2), NightSkyBackground.test; Chrome: 0 bucles con el fondo detenido |
+| Alta (WCAG 2.5.3) | src/components/Carousel.jsx:135 | Nombre «Ampliar foto 1 de 2» sin el texto visible (autor) | Nombre «Ampliar foto 1 de 2, de Ana» | axe `label-content-name-mismatch` 0; Carousel.test |
+| Alta (WCAG 2.5.3) | src/components/BacklogCard.jsx:112 | El botón de edición contenía la descripción, ausente de su nombre | Descripción fuera del botón, enlazada con `aria-describedby` | axe 0; BacklogPage.test |
+| Media (WCAG 2.5.8) | src/components/Carousel.jsx:185 | Puntos del carrusel de 14 px de ancho | Área mínima 24 px (`min-w-6`), punto visual igual | axe `target-size` 0 |
+| Media (WCAG 2.4.11) | src/index.css:208 | En móvil el encabezado fijo tapaba el elemento enfocado (campos de edición, botones de mes) | `scroll-padding-top: 5rem` bajo 768 px | Recorrido con Tab: 0 tapados |
+| Media | src/pages/CalendarioPage.jsx:162 | Con error se anunciaba «sin citas» junto a la alerta de fallo | Sin resumen si hay error | CalendarioPage.test |
+| Media | src/pages/CitaDetailPage.jsx:163,180; src/pages/ParejaPage.jsx:70,89 | Sin `<h1>` en carga y error | `<h1>` en ambos estados | axe `page-has-heading-one` 0; CitaDetailPage.test |
+| Baja | src/components/Carousel.jsx:14 | Dos regiones llamadas «Fotos» en el detalle | Carrusel: «Carrusel de fotos» | axe `landmark-unique` 0 |
+| Baja (contraste) | src/components/Carousel.jsx:98 | Autor en las fotos laterales (semitransparentes) 1.67:1 | Autor solo en la foto central | axe `color-contrast` 0 |
+| Media (animación) | src/index.css:191 | Entrada `.fade-in-up` de 550 ms y 22 px en contenido visto a diario | 280 ms, 12 px, escala 0.98 | Revisión; reducido sigue en fundido |
+| Media (animación) | src/components/CitaCard.jsx:45 | Zoom de imagen al pasar el ratón de 700 ms | 300 ms | Revisión |
+| Media (rendimiento) | src/components/Layout.jsx:33, src/components/Sidebar.jsx | Colapsar la barra animaba `padding`/`width` (layout de toda la página por fotograma) | Colapso instantáneo | Revisión |
+| Baja | src/index.css:234 | Sin `touch-action: manipulation` en controles | Añadido | Revisión |
+| Baja | src/components/Sidebar.jsx:68 | Marca traducible automáticamente | `translate="no"` | Revisión |
+
+## Pendientes resueltos después de la auditoría
+
+| Severidad | Dónde | Hallazgo | Corrección | Verificación |
+|---|---|---|---|---|
+| Media | src/main.jsx, src/hooks/useUnsavedChanges.js, CitaFormPage, EntryFormPage, CitaEditPage | Sin aviso al salir con cambios sin guardar | `createBrowserRouter` con una ruta comodín que renderiza el mismo `<App/>` (rutas y `ProtectedRoute` intactos) + `useBlocker` con `ConfirmDialog` («Seguir editando» / «Salir sin guardar») y `beforeunload`. Tras guardar no pregunta; salir a `/login` (cerrar sesión) no se bloquea | Vitest (5 casos en CitaEditPage.test) + E2E |
+| Media | src/pages/BacklogPage.jsx | Borrar una idea era inmediato | `ConfirmDialog` «¿Borrar esta idea?»; la petición `DELETE` es la misma | Vitest + E2E (cancelar no envía nada) |
+| Media | playwright.config.js, e2e/ | Sin pruebas E2E | `@playwright/test` 1.64.1 + `@axe-core/playwright` 4.14.0 (devDependencies). Build + `vite preview`, Chrome del sistema, API simulada con `page.route` y sin WebSocket: no se toca el backend ni se usan credenciales | `pnpm test:e2e` |
+| Baja | src/components/Carousel.jsx | Los puntos animaban `width` | Ancho fijo + `scale-x` | Captura |
+| Baja | index.html, src/index.css | Sora se seguía cargando | `--font-display: var(--font-ui)` (Manrope); Sora fuera del enlace de fuentes | Captura |
+| Baja | src/components/SkyMotionToggle.jsx, AuthLayout.jsx | «Animar el fondo» solo en la barra lateral | Control compartido, también bajo los formularios de Login y Registro | E2E |
+| Baja | src/pages/GaleriaPage.jsx | (encontrado por axe en móvil) el pie visible «Nombre» + «fecha» no coincidía con el `aria-label` (WCAG 2.5.3) | Espacio entre nombre y fecha; `aria-label` sin coma | E2E axe |
+
+## Pruebas E2E
+
+`pnpm test:e2e` (requiere Google Chrome instalado; si no, `pnpm exec playwright install chromium` y quitar `channel` en `playwright.config.js`).
+
+- Proyectos: escritorio (1440×900) y móvil (Pixel 7, táctil).
+- `e2e/recorridos.spec.js`: login, ruta protegida, enlace para saltar, menú móvil con Escape, borrar cita (Escape cancela sin `DELETE`), borrar foto, visor de la galería, cambios sin guardar (diálogo interno y `beforeunload`), borrado y «Mover a» del Backlog, persistencia del tema, «Animar el fondo» en Login y movimiento reducido.
+- `e2e/accesibilidad.spec.js`: axe (WCAG 2.0/2.1/2.2 A y AA) en login, registro y las 9 pantallas con sesión, con los temas Noche y Halloween.
+- Resultado: 68 aprobadas, 2 omitidas a propósito (menú móvil en escritorio y selector de tema de escritorio en móvil).
+
+## Rendimiento del fondo (mediciones comparables)
+
+Mismo script y página (`/login`, 1440 px) que en la etapa 2, 3 repeticiones; build de la etapa 1 (fondo original) frente al actual.
+
+| | Original | Noche | Halloween | Navidad |
+|---|---|---|---|---|
+| Animaciones continuas | 11 | 2 | 2 | 3 |
+| Elementos con `filter`/`blend` | 4 (auroras con blur 70 px) | 1 | 4 (calabazas, sombra estática) | 1 |
+| Hilo principal en 5 s | 0.016–0.038 s | 0.018–0.046 s | 0.020–0.048 s | 0.012–0.035 s |
+
+El tiempo de hilo principal no permite concluir una mejora: los rangos se solapan y el coste de estas animaciones está en la composición (GPU), que Chrome headless no mide de forma fiable.

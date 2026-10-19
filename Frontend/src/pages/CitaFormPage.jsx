@@ -7,6 +7,8 @@ import EntryFields, { inputClass, labelClass } from '../components/EntryFields';
 import RepetiriamosField from '../components/RepetiriamosField';
 import Field from '../components/ui/Field';
 import StatusMessage from '../components/ui/StatusMessage';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import useUnsavedChanges from '../hooks/useUnsavedChanges';
 
 const emptyEntry = {
   valoracion: 0,
@@ -31,6 +33,12 @@ export default function CitaFormPage() {
   const [valoracionError, setValoracionError] = useState('');
   const [loading, setLoading] = useState(false);
   const ratingRef = useRef(null);
+
+  const isDirty =
+    Boolean(nombre || fecha || lugar || fotos.length) ||
+    repetiriamos !== 'SI' ||
+    Object.keys(emptyEntry).some((k) => entry[k] !== emptyEntry[k]);
+  const unsaved = useUnsavedChanges(isDirty);
 
   function updateEntry(next) {
     setEntry(next);
@@ -63,6 +71,7 @@ export default function CitaFormPage() {
       fotos.forEach((f) => body.append('fotos', f));
 
       const { data } = await client.post('/citas', body);
+      unsaved.allowNavigation(); // guardado: salir ya no pierde nada
       navigate(`/citas/${data.id}`);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo guardar la cita. Revisa los datos y vuelve a intentarlo.');
@@ -166,6 +175,8 @@ export default function CitaFormPage() {
           </Link>
         </div>
       </form>
+
+      <ConfirmDialog {...unsaved.dialogProps} />
     </Layout>
   );
 }

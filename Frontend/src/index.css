@@ -4,7 +4,7 @@
 
 /* =========================================================================
    NUESTRO LIBRO DE CITAS — Sistema de diseño "Noche Estrellada Premium"
-   Tipografía: Sora (display) + Manrope (texto) + Caveat (acento a mano)
+   Tipografía: Manrope (interfaz y títulos) + Caveat (acento a mano)
    Paleta:  #070b22 · #141d4d · #8ba0ff · #ffcc33
    -------------------------------------------------------------------------
    Tokens semánticos (canvas, surface, fg, accent, border…) + alias de
@@ -17,11 +17,12 @@
    utilidad. Los tokens semánticos se emiten siempre porque los alias y las
    clases de este archivo los referencian con var(). */
 @theme static {
-  /* Tipografía. Sora (--font-display) se conserva temporalmente: la usan
-     las clases font-display y los h1–h4; se migrará pantalla a pantalla. */
+  /* Tipografía: Manrope para toda la interfaz (también títulos) y Caveat para
+     lo escrito a mano en las polaroids. --font-display se mantiene como alias
+     para no tocar las clases font-display existentes. (Sora ya no se carga.) */
   --font-ui: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-hand: "Caveat", cursive;
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-ui);
 
   /* Superficies */
   --color-canvas: #070b22;
@@ -176,7 +177,7 @@
 }
 
 @keyframes card-in {
-  0% { opacity: 0; transform: translateY(22px) scale(0.97); }
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -186,8 +187,10 @@
 }
 
 @layer components {
+  /* Entrada de contenido de la página (se ve decenas de veces al día): por
+     debajo de 300 ms y con un desplazamiento corto (antes 550 ms y 22 px). */
   .fade-in-up {
-    animation: card-in 0.55s var(--ease-out) both;
+    animation: card-in var(--duration-slow) var(--ease-out) both;
   }
 }
 
@@ -201,6 +204,9 @@
 
 html {
   color-scheme: dark; /* controles nativos (fecha, scrollbars) en oscuro */
+  /* El encabezado fijo del móvil (≈65 px) no debe tapar el elemento enfocado
+     ni el destino de un enlace al desplazarse. En escritorio no hay encabezado fijo. */
+  scroll-padding-top: 5rem;
   font-family: var(--font-sans);
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
@@ -221,6 +227,16 @@ h1, h2, h3, h4 {
   font-family: var(--font-display);
   letter-spacing: -0.025em;
   text-wrap: balance;
+}
+
+/* Sin el retardo de doble toque para zoom en controles (el zoom con pellizco
+   sigue disponible). */
+:where(a, button, input, select, textarea, label, summary, [role="button"]) {
+  touch-action: manipulation;
+}
+
+@media (min-width: 768px) {
+  html { scroll-padding-top: 0; }
 }
 
 ::selection {
@@ -428,6 +444,16 @@ body::after {
    color del tema. */
 .flying-dragon {
   color: var(--flyer-color);
+}
+
+/* «Animar el fondo» desactivado (WCAG 2.2.2): estrellas y luna quietas, sin
+   nevada; los voladores no se programan (NightSkyBackground). */
+html[data-sky-motion="off"] body::after,
+html[data-sky-motion="off"] .moon-glow {
+  animation: none;
+}
+html[data-sky-motion="off"] .snowfall {
+  display: none;
 }
 
 html[data-sky-paused] body::after,

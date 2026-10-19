@@ -148,6 +148,8 @@ describe('BacklogPage', () => {
     renderPage();
 
     await user.click(await screen.findByRole('button', { name: 'Borrar «Picnic»' }));
+    const dialog = screen.getByRole('alertdialog', { name: '¿Borrar esta idea?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Borrar idea' }));
 
     expect(client.delete).toHaveBeenCalledWith('/ideas-citas/2');
     expect((await screen.findByText('No se pudo borrar «Picnic».')).closest('[role="alert"]')).not.toBeNull();
@@ -169,5 +171,19 @@ describe('BacklogPage', () => {
     renderPage();
     const editar = await screen.findByRole('button', { name: 'Editar «Ir al cine»' });
     expect(editar).toHaveAccessibleDescription('Estreno');
+  });
+
+  it('borrar pide confirmación: cancelar no borra nada', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Borrar «Picnic»' }));
+    const dialog = screen.getByRole('alertdialog', { name: '¿Borrar esta idea?' });
+    expect(dialog).toHaveAccessibleDescription('Se borrará «Picnic» del backlog. No se puede deshacer.');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+
+    await waitFor(() => expect(dialog.open).toBe(false));
+    expect(client.delete).not.toHaveBeenCalled();
+    expect(within(column('Hecha')).getByText('Picnic')).toBeInTheDocument();
   });
 });

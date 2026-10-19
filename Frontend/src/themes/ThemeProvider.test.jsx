@@ -134,4 +134,24 @@ describe('ThemeProvider', () => {
     });
     expect(html().dataset.season).toBe('primavera');
   });
+
+  it('«Animar el fondo» se puede desactivar, persiste y lo aplica a <html> (WCAG 2.2.2)', async () => {
+    const user = userEvent.setup();
+    renderWithClock(() => new Date(2026, 9, 31));
+    const toggle = screen.getByRole('checkbox', { name: 'Animar el fondo' });
+    expect(toggle).toBeChecked();
+
+    await user.click(toggle);
+
+    expect(html().dataset.skyMotion).toBe('off');
+    expect(localStorage.getItem('nlc:animar-fondo')).toBe('no');
+    expect(screen.getByRole('status')).toHaveTextContent('Animaciones del fondo detenidas.');
+  });
+
+  it('la preferencia de fondo detenido se recupera al recargar', () => {
+    localStorage.setItem('nlc:animar-fondo', 'no');
+    renderWithClock(() => new Date(2026, 9, 31));
+    expect(screen.getByRole('checkbox', { name: 'Animar el fondo' })).not.toBeChecked();
+    expect(html().dataset.skyMotion).toBe('off');
+  });
 });

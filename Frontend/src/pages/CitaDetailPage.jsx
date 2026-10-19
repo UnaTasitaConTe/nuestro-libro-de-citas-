@@ -160,6 +160,7 @@ export default function CitaDetailPage() {
     return (
       <Layout>
         <div className="mx-auto max-w-xl">
+          <h1 className="mb-4 font-display text-2xl font-bold text-ink-strong">Cita no disponible</h1>
           <p role="alert" className="alert alert-danger">
             {error}. Revisa tu conexión y vuelve a intentarlo.
           </p>
@@ -176,6 +177,7 @@ export default function CitaDetailPage() {
     return (
       <Layout>
         <div className="mx-auto max-w-2xl space-y-4" aria-busy="true">
+          <h1 className="sr-only">Detalle de la cita</h1>
           <p role="status" className="sr-only">Cargando la cita…</p>
           <div className="skeleton h-9 w-24 rounded-full" />
           <div className="skeleton h-52 rounded-3xl" />

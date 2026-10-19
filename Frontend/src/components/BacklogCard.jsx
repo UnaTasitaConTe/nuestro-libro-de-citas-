@@ -101,25 +101,25 @@ export default function BacklogCard({ idea, onSave, onDelete, onMove }) {
               <p className="text-[11px] text-ink/80">Enter guarda; Esc cancela.</p>
             </div>
           ) : (
-            <button
-              ref={editButtonRef}
-              type="button"
-              onClick={startEditing}
-              // Nombre corto y estable; la descripción se lee como descripción, no como nombre.
-              aria-label={`Editar «${idea.titulo}»`}
-              aria-describedby={idea.descripcion ? descriptionId : undefined}
-              className="block w-full cursor-text rounded-md text-left"
-            >
-              <span className="block break-words font-hand text-xl leading-tight text-ink-dark">{idea.titulo}</span>
+            <>
+              <button
+                ref={editButtonRef}
+                type="button"
+                onClick={startEditing}
+                // El nombre contiene el texto visible del botón (WCAG 2.5.3); la
+                // descripción va fuera y se asocia como descripción.
+                aria-label={`Editar «${idea.titulo}»`}
+                aria-describedby={idea.descripcion ? descriptionId : undefined}
+                className="block w-full cursor-text rounded-md text-left"
+              >
+                <span className="block break-words font-hand text-xl leading-tight text-ink-dark">{idea.titulo}</span>
+              </button>
               {idea.descripcion && (
-                <span
-                  id={descriptionId}
-                  className="mt-1 block whitespace-pre-wrap break-words text-xs leading-relaxed text-ink/80"
-                >
+                <p id={descriptionId} className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-ink/80">
                   {idea.descripcion}
-                </span>
+                </p>
               )}
-            </button>
+            </>
           )}
 
           {!editing && (

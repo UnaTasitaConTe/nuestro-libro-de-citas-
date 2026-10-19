@@ -7,6 +7,8 @@ import { inputClass, labelClass } from '../components/EntryFields';
 import RepetiriamosField from '../components/RepetiriamosField';
 import Field from '../components/ui/Field';
 import StatusMessage from '../components/ui/StatusMessage';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import useUnsavedChanges from '../hooks/useUnsavedChanges';
 
 export default function CitaEditPage() {
   const { id } = useParams();
@@ -17,6 +19,8 @@ export default function CitaEditPage() {
   const [lugar, setLugar] = useState('');
   const [repetiriamos, setRepetiriamos] = useState('SI');
   const [loaded, setLoaded] = useState(false);
+  // Datos tal como se cargaron: con ellos se sabe si hay cambios sin guardar.
+  const [initial, setInitial] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,10 +33,16 @@ export default function CitaEditPage() {
         setFecha(data.fecha.slice(0, 10));
         setLugar(data.lugar);
         setRepetiriamos(data.repetiriamos);
+        setInitial({ nombre: data.nombre, fecha: data.fecha.slice(0, 10), lugar: data.lugar, repetiriamos: data.repetiriamos });
         setLoaded(true);
       })
       .catch(() => setLoadError('No se pudo cargar la cita'));
   }, [id]);
+
+  const isDirty =
+    initial !== null &&
+    (nombre !== initial.nombre || fecha !== initial.fecha || lugar !== initial.lugar || repetiriamos !== initial.repetiriamos);
+  const unsaved = useUnsavedChanges(isDirty);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -40,6 +50,7 @@ export default function CitaEditPage() {
     setLoading(true);
     try {
       await client.patch(`/citas/${id}`, { nombre, fecha, lugar, repetiriamos });
+      unsaved.allowNavigation(); // guardado: salir ya no pierde nada
       navigate(`/citas/${id}`);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron guardar los cambios. Vuelve a intentarlo.');
@@ -142,6 +153,8 @@ export default function CitaEditPage() {
           </div>
         </form>
       )}
+
+      <ConfirmDialog {...unsaved.dialogProps} />
     </Layout>
   );
 }

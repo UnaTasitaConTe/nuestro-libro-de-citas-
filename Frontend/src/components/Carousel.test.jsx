@@ -12,7 +12,7 @@ describe('Carousel', () => {
   it('abre el visor compartido desde la foto central', async () => {
     const user = userEvent.setup();
     render(<Carousel photos={PHOTOS} alt="Cena" />);
-    const center = screen.getByRole('button', { name: 'Ampliar foto 1 de 2' });
+    const center = screen.getByRole('button', { name: 'Ampliar foto 1 de 2, de Ana' });
 
     await user.click(center);
 
@@ -60,13 +60,13 @@ describe('Carousel', () => {
   it('las flechas del teclado recorren las fotos y el cambio se anuncia', async () => {
     const user = userEvent.setup();
     render(<Carousel photos={PHOTOS} alt="Cena" />);
-    const region = screen.getByRole('region', { name: 'Fotos' });
+    const region = screen.getByRole('region', { name: 'Carrusel de fotos' });
     expect(region).toHaveAttribute('aria-roledescription', 'carrusel');
 
-    screen.getByRole('button', { name: 'Ampliar foto 1 de 2' }).focus();
+    screen.getByRole('button', { name: 'Ampliar foto 1 de 2, de Ana' }).focus();
     await user.keyboard('{ArrowRight}');
 
-    expect(screen.getByRole('button', { name: 'Ampliar foto 2 de 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ampliar foto 2 de 2, de Luis' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ir a foto 2' })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('status')).toHaveTextContent('Foto 2 de 2');
   });

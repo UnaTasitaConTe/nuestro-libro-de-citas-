@@ -111,3 +111,27 @@ describe('NightSkyBackground: decoraciones de temporada', () => {
     expect(container.querySelector('.pumpkin, .skyline-snow, .snowfall')).toBeNull();
   });
 });
+
+describe('NightSkyBackground: fondo detenido por la persona', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    window.__mediaMatches = {};
+    localStorage.clear();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sin voladores ni nevada cuando «Animar el fondo» está desactivado', () => {
+    localStorage.setItem('nlc:animar-fondo', 'no');
+    const { container } = render(
+      <ThemeProvider now={() => new Date(2026, 11, 24)}>
+        <NightSkyBackground />
+      </ThemeProvider>
+    );
+    expect(container.querySelector('.snowfall')).toBeNull();
+    expect(container.querySelector('.skyline-snow')).not.toBeNull(); // lo estático se mantiene
+    act(() => vi.advanceTimersByTime(5 * 60 * 1000));
+    expect(container.querySelectorAll('.flying-dragon')).toHaveLength(0);
+  });
+});

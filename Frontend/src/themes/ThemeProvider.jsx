@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'reac
 import { ThemeContext } from './themeContext';
 import { THEMES, getTheme, isThemeId } from './themes';
 import { resolveSeason } from './seasons';
-import { APPLIED_KEY, PREFERENCE_KEY, readStorage, writeStorage } from './storage';
+import { APPLIED_KEY, PREFERENCE_KEY, SKY_MOTION_KEY, readStorage, writeStorage } from './storage';
 
 const AUTO = 'auto';
 const RECHECK_MS = 60 * 60 * 1000; // en modo automático, se reevalúa cada hora
@@ -19,6 +19,10 @@ function readPreference() {
 export function ThemeProvider({ children, now = systemNow }) {
   const [preference, setPreferenceState] = useState(readPreference);
   const [resolution, setResolution] = useState(() => resolveSeason(now()));
+  // WCAG 2.2.2: el movimiento decorativo del fondo (más de 5 s, junto al
+  // contenido) se puede detener desde la propia app, no solo con la preferencia
+  // de movimiento reducido del sistema.
+  const [skyMotion, setSkyMotionState] = useState(() => readStorage(SKY_MOTION_KEY) !== 'no');
 
   // Modo automático: la fecha puede cambiar con la app abierta (medianoche,
   // portátil suspendido). Se recalcula al volver a la pestaña y cada hora.
@@ -43,6 +47,7 @@ export function ThemeProvider({ children, now = systemNow }) {
   useEffect(() => {
     function onStorage(event) {
       if (event.key === PREFERENCE_KEY) setPreferenceState(readPreference());
+      if (event.key === SKY_MOTION_KEY) setSkyMotionState(event.newValue !== 'no');
     }
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
@@ -52,6 +57,11 @@ export function ThemeProvider({ children, now = systemNow }) {
     const next = value === AUTO || isThemeId(value) ? value : AUTO;
     setPreferenceState(next);
     writeStorage(PREFERENCE_KEY, next); // si falla, la elección vale para esta sesión
+  }, []);
+
+  const setSkyMotion = useCallback((enabled) => {
+    setSkyMotionState(enabled);
+    writeStorage(SKY_MOTION_KEY, enabled ? 'si' : 'no');
   }, []);
 
   const autoTheme = getTheme(resolution.themeId);
@@ -67,9 +77,23 @@ export function ThemeProvider({ children, now = systemNow }) {
     writeStorage(APPLIED_KEY, activeTheme.id);
   }, [activeTheme]);
 
+  useLayoutEffect(() => {
+    if (skyMotion) delete document.documentElement.dataset.skyMotion;
+    else document.documentElement.dataset.skyMotion = 'off';
+  }, [skyMotion]);
+
   const value = useMemo(
-    () => ({ preference, setPreference, activeTheme, autoTheme, season: resolution.season, themes: THEMES }),
-    [preference, setPreference, activeTheme, autoTheme, resolution.season]
+    () => ({
+      preference,
+      setPreference,
+      activeTheme,
+      autoTheme,
+      season: resolution.season,
+      themes: THEMES,
+      skyMotion,
+      setSkyMotion,
+    }),
+    [preference, setPreference, activeTheme, autoTheme, resolution.season, skyMotion, setSkyMotion]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

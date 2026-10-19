@@ -31,7 +31,9 @@ export default function Layout({ children }) {
       <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
 
       <div
-        className={`flex min-h-screen flex-col transition-[padding] duration-300 ${
+        // Sin transición: animar padding recalcula el layout de toda la página en
+        // cada fotograma; el colapso (ocasional) es instantáneo.
+        className={`flex min-h-screen flex-col ${
           collapsed ? 'md:pl-20' : 'md:pl-72'
         }`}
       >

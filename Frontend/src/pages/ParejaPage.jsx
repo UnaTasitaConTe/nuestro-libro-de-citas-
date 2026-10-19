@@ -67,6 +67,7 @@ export default function ParejaPage() {
   if (error) {
     return (
       <Layout>
+        <PageHeader title="Invitar a mi pareja" subtitle="Un solo libro, dos voces contándolo." />
         <p role="alert" className="alert alert-danger max-w-xl">
           {error}. Revisa tu conexión y{' '}
           <button
@@ -85,6 +86,7 @@ export default function ParejaPage() {
   if (!pareja) {
     return (
       <Layout>
+        <PageHeader title="Invitar a mi pareja" subtitle="Un solo libro, dos voces contándolo." />
         <div className="max-w-md space-y-4" aria-busy="true">
           <p role="status" className="sr-only">Cargando…</p>
           <div className="skeleton h-56 rounded-3xl" />

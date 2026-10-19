@@ -1,4 +1,28 @@
+# Dependencias (la imagen instala las suyas)
 node_modules
+
+# Secretos y configuración local
 .env
+.env.*
+
+# Fotos subidas: viven en el volumen «uploads», no en la imagen
 uploads/*
 !uploads/.gitkeep
+
+# Pruebas; no forman parte de la imagen
+tests
+vitest.config.js
+coverage
+
+# Control de versiones, editor y logs
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.log
+*.md
+
+# Archivos de Docker
+Dockerfile
+.dockerignore

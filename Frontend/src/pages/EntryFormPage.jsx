@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader';
 import EntryFields from '../components/EntryFields';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import StatusMessage from '../components/ui/StatusMessage';
+import useUnsavedChanges from '../hooks/useUnsavedChanges';
 import { REPETIRIAMOS_LABEL } from '../constants/repetiriamos';
 import { formatFecha } from '../utils/date';
 
@@ -27,6 +28,8 @@ export default function EntryFormPage() {
 
   const [cita, setCita] = useState(null);
   const [entry, setEntry] = useState(emptyEntry);
+  // Versión tal como se cargó: con ella se sabe si hay cambios sin guardar.
+  const [initialEntry, setInitialEntry] = useState(emptyEntry);
   const [fotos, setFotos] = useState([]);
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [photoToDelete, setPhotoToDelete] = useState(null);
@@ -35,6 +38,12 @@ export default function EntryFormPage() {
   const [valoracionError, setValoracionError] = useState('');
   const [loading, setLoading] = useState(false);
   const ratingRef = useRef(null);
+
+  // Borrar una foto guardada no cuenta: ya se guardó en el momento.
+  const isDirty =
+    Boolean(cita) &&
+    (fotos.length > 0 || Object.keys(emptyEntry).some((k) => entry[k] !== initialEntry[k]));
+  const unsaved = useUnsavedChanges(isDirty);
 
   function updateEntry(next) {
     setEntry(next);
@@ -46,14 +55,16 @@ export default function EntryFormPage() {
       setCita(data);
       const mine = data.entries.find((e) => e.user_id === user.id);
       if (mine) {
-        setEntry({
+        const loaded = {
           valoracion: mine.valoracion,
           queHicimos: mine.que_hicimos || '',
           comoTeSentiste: mine.como_te_sentiste || '',
           loQueMasGusto: mine.lo_que_mas_gusto || '',
           loQueMenosGusto: mine.lo_que_menos_gusto || '',
           intimidad: mine.intimidad || false,
-        });
+        };
+        setEntry(loaded);
+        setInitialEntry(loaded);
         setExistingPhotos(mine.photos || []);
       }
     }).catch(() => setLoadError('No se pudo cargar la cita'));
@@ -94,6 +105,7 @@ export default function EntryFormPage() {
       fotos.forEach((f) => body.append('fotos', f));
 
       await client.put(`/citas/${id}/mi-entrada`, body);
+      unsaved.allowNavigation(); // guardado: salir ya no pierde nada
       navigate(`/citas/${id}`);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo guardar tu versión. Vuelve a intentarlo.');
@@ -189,6 +201,8 @@ export default function EntryFormPage() {
         onConfirm={removeExistingPhoto}
         onCancel={() => setPhotoToDelete(null)}
       />
+
+      <ConfirmDialog {...unsaved.dialogProps} />
     </Layout>
   );
 }

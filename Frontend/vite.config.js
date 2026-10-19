@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       include: ['src/**/*.test.{js,jsx}'],
       setupFiles: ['./src/test/setup.js'],
+      // Las pruebas que escriben mucho con user-event tardan ~1,5 s solas, pero
+      // con todos los archivos en paralelo (Windows, jsdom) superaban los 5 s.
+      testTimeout: 15000,
     },
   }
 })

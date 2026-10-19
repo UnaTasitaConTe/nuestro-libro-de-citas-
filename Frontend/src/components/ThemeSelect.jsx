@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Palette } from 'lucide-react';
 import { useSeasonTheme } from '../themes/themeContext';
 import StatusMessage from './ui/StatusMessage';
+import SkyMotionToggle from './SkyMotionToggle';
 
 /**
  * Selector de tema de temporada: "Automático" (según la fecha) o un tema
@@ -45,6 +46,11 @@ export default function ThemeSelect({ id }) {
       <p id={hintId} className="mt-1.5 text-[11px] leading-snug text-ink/80">
         {preference === 'auto' ? 'Cambia solo según la fecha.' : 'Elegido por ti: no cambia con la fecha.'}
       </p>
+      {/* WCAG 2.2.2: el movimiento decorativo del fondo se puede detener. */}
+      <SkyMotionToggle
+        className="mt-3"
+        onToggle={(on) => setAnnouncement(on ? 'Animaciones del fondo activadas.' : 'Animaciones del fondo detenidas.')}
+      />
       <StatusMessage className="sr-only">{announcement}</StatusMessage>
     </div>
   );

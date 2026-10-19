@@ -45,7 +45,7 @@ function GalleryImage({ photo, onClick }) {
       type="button"
       onClick={onClick}
       // Nombre único y descriptivo (antes se leía "Picnic Picnic 2 de mayo…").
-      aria-label={`Ampliar foto de ${photo.cita_nombre}, ${fecha}`}
+      aria-label={`Ampliar foto de ${photo.cita_nombre} ${fecha}`}
       className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-line bg-card/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-dark focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
     >
       {visible && (
@@ -62,7 +62,8 @@ function GalleryImage({ photo, onClick }) {
         aria-hidden="true"
         className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2.5 pb-2 pt-8 text-left opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
       >
-        <span className="block truncate text-xs font-medium text-white">{photo.cita_nombre}</span>
+        <span className="block truncate text-xs font-medium text-white">{photo.cita_nombre}</span>{' '}
+        {/* El espacio separa nombre y fecha en el texto: así el pie visible coincide con el aria-label (WCAG 2.5.3). */}
         <span className="block text-[11px] text-white/75">{fecha}</span>
       </span>
     </button>
