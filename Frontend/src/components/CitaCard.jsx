@@ -30,7 +30,7 @@ export default function CitaCard({ cita, headingLevel = 'h2' }) {
 
   return (
     <article
-      className="polaroid-tilt group relative rounded-md border border-ink-dark/25 bg-polaroid p-3 pb-5 shadow-[0_12px_28px_rgba(3,6,20,0.55)] hover:shadow-[0_26px_50px_-18px_rgba(255,204,51,0.45)]"
+      className="polaroid-tilt group relative rounded-md border border-ink-dark/25 bg-polaroid p-3 pb-5 shadow-polaroid hover:shadow-polaroid-lift"
       style={{ '--tilt': `${rotation}deg` }}
     >
       <span className="washi-tape" aria-hidden="true" />

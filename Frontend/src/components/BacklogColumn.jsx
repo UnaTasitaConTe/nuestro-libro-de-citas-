@@ -22,7 +22,7 @@ export default function BacklogColumn({ estado, label, ideas, onSave, onDelete, 
         ref={setNodeRef}
         className={`min-h-[220px] rounded-3xl border border-dashed p-3 transition-[border-color,background-color,box-shadow] duration-300 ${
           isOver
-            ? 'border-ink-dark bg-ink-dark/5 shadow-[inset_0_0_30px_-12px_rgba(255,204,51,0.5)]'
+            ? 'border-ink-dark bg-ink-dark/5 shadow-drop-zone'
             : 'border-line bg-card/25'
         }`}
       >

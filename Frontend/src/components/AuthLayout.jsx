@@ -21,7 +21,7 @@ export default function AuthLayout({ title, intro, aside, formTitle, formIntro, 
           style={{ animationDelay: '0.1s' }}
         >
           <div className="mb-5 flex justify-center">
-            <DragonIcon className="h-16 w-16 drop-shadow-[0_0_18px_rgba(255,204,51,0.4)]" />
+            <DragonIcon className="h-16 w-16 drop-shadow-glow-lg" />
           </div>
           <h2 id="auth-form-title" className="text-center font-display text-2xl font-semibold text-ink-strong">
             {formTitle}

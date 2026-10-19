@@ -187,11 +187,11 @@ export default function EntryFields({
           <span
             aria-hidden="true"
             className={`flex h-6 w-6 items-center justify-center rounded-lg border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink-dark ${
-              entry.intimidad ? 'border-rose-400 bg-rose-400/15' : 'border-line bg-card/60'
+              entry.intimidad ? 'border-passion bg-passion/15' : 'border-line bg-card/60'
             }`}
           >
             <Flame
-              className={`h-3.5 w-3.5 text-rose-400 transition-opacity ${entry.intimidad ? 'opacity-100' : 'opacity-0'}`}
+              className={`h-3.5 w-3.5 text-passion transition-opacity ${entry.intimidad ? 'opacity-100' : 'opacity-0'}`}
               strokeWidth={2}
             />
           </span>

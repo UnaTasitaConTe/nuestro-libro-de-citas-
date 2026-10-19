@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Paletas de temporada: solo redefinen tokens (ver el propio archivo). */
+@import "./themes/seasons.css";
 
 /* =========================================================================
    NUESTRO LIBRO DE CITAS — Sistema de diseño "Noche Estrellada Premium"
@@ -47,6 +49,9 @@
   --color-danger: #ff8095;
   --color-success: #58e3b4;
 
+  /* Sombras proyectadas (casi negro teñido del cielo) */
+  --color-shadow: #030614;
+
   /* Polaroids */
   --color-polaroid: #16204f;
   --color-polaroid-mat: #0c1236;
@@ -61,9 +66,23 @@
   --radius-glass: 1.75rem;
 
   /* Sombras */
-  --shadow-soft: 0 8px 24px rgba(3, 6, 20, 0.45);
-  --shadow-elevated: 0 22px 48px -18px rgba(3, 6, 20, 0.85);
-  --shadow-gold: 0 12px 34px -10px rgba(255, 204, 51, 0.45);
+  --shadow-soft: 0 8px 24px color-mix(in oklab, var(--color-shadow) 45%, transparent);
+  --shadow-elevated: 0 22px 48px -18px color-mix(in oklab, var(--color-shadow) 85%, transparent);
+  --shadow-gold: 0 12px 34px -10px color-mix(in oklab, var(--color-accent) 45%, transparent);
+
+  /* Sombras con nombre (antes valores arbitrarios en el JSX con colores fijos):
+     derivan de --color-shadow y --color-accent, así que siguen al tema. */
+  --shadow-polaroid: 0 12px 28px color-mix(in oklab, var(--color-shadow) 55%, transparent);
+  --shadow-polaroid-lift: 0 26px 50px -18px color-mix(in oklab, var(--color-accent) 45%, transparent);
+  --shadow-polaroid-lg: 0 16px 38px color-mix(in oklab, var(--color-shadow) 60%, transparent);
+  --shadow-photo: 0 28px 54px -16px color-mix(in oklab, var(--color-shadow) 90%, transparent);
+  --shadow-photo-side: 0 14px 28px color-mix(in oklab, var(--color-shadow) 50%, transparent);
+  --shadow-overlay: 0 20px 44px -14px color-mix(in oklab, var(--color-shadow) 85%, transparent);
+  --shadow-accent-glow: 0 8px 24px -8px color-mix(in oklab, var(--color-accent) 70%, transparent);
+  --shadow-drop-zone: inset 0 0 30px -12px color-mix(in oklab, var(--color-accent) 50%, transparent);
+  --drop-shadow-glow-sm: 0 0 8px color-mix(in oklab, var(--color-accent) 45%, transparent);
+  --drop-shadow-glow: 0 0 12px color-mix(in oklab, var(--color-accent) 35%, transparent);
+  --drop-shadow-glow-lg: 0 0 18px color-mix(in oklab, var(--color-accent) 40%, transparent);
 
   /* Curvas (skill animate). Sustituyen a las de Tailwind, demasiado suaves,
      también en las utilidades ease-out / ease-in-out. */
@@ -94,8 +113,31 @@
   --ease-smooth: var(--ease-out);
 }
 
-/* Duraciones: Tailwind no tiene espacio de nombres para ellas. */
+/* Duraciones y escena. Tailwind no tiene espacio de nombres para ellas; los
+   temas de temporada (themes/seasons.css) redefinen las de escena. */
 :root {
+  /* Escena: cielo, estrellas, resplandor, luna y skyline */
+  --sky-1: #04061a;
+  --sky-2: #070b22;
+  --sky-3: #0a1136;
+  --sky-4: #101a45;
+  --sky-5: #141d4d;
+  --star: #fff;
+  --star-accent: var(--color-accent);
+  --glow-1: rgba(46, 230, 168, 0.17);
+  --glow-2: color-mix(in oklab, var(--color-secondary) 19%, transparent);
+  --glow-3: color-mix(in oklab, var(--color-accent) 6%, transparent);
+  --moon: var(--color-accent-soft);
+  /* Sombra que recorta la luna en creciente; transparente = luna llena. */
+  --moon-shade: var(--color-canvas);
+  --moon-glow: color-mix(in oklab, var(--color-accent) 26%, transparent);
+  --skyline-back: #0a1138;
+  --skyline-front: #05081f;
+  --snow: #e9f1fb;
+  --flyer-color: #050814;
+  /* Punto medio del degradado de botones y títulos dorados */
+  --accent-mid: color-mix(in oklab, var(--color-accent) 45%, var(--color-accent-soft));
+
   --duration-instant: 120ms; /* pulsación */
   --duration-fast: 160ms;    /* hover, color */
   --duration-base: 220ms;    /* cambios de estado */
@@ -113,6 +155,11 @@
 @keyframes drift {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
+}
+
+@keyframes snow-fall {
+  from { transform: translate3d(0, -50%, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes fly-across {
@@ -163,7 +210,7 @@ body {
   position: relative;
   min-height: 100svh;
   background:
-    linear-gradient(180deg, #04061a 0%, #070b22 28%, #0a1136 55%, #101a45 80%, #141d4d 100%);
+    linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 28%, var(--sky-3) 55%, var(--sky-4) 80%, var(--sky-5) 100%);
   color: var(--color-fg);
   overflow-x: hidden;
   font-feature-settings: "ss01", "cv01";
@@ -177,8 +224,8 @@ h1, h2, h3, h4 {
 }
 
 ::selection {
-  background: rgba(255, 204, 51, 0.28);
-  color: #fff;
+  background: color-mix(in oklab, var(--color-accent) 28%, transparent);
+  color: var(--color-fg);
 }
 
 /* Foco accesible y consistente en toda la app. El contorno sigue el radio
@@ -193,11 +240,11 @@ h1, h2, h3, h4 {
 /* Scrollbar discreta */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(139, 160, 255, 0.35) transparent;
+  scrollbar-color: color-mix(in oklab, var(--color-secondary) 35%, transparent) transparent;
 }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-thumb {
-  background: rgba(139, 160, 255, 0.28);
+  background: color-mix(in oklab, var(--color-secondary) 28%, transparent);
   border-radius: 9999px;
   border: 3px solid transparent;
   background-clip: content-box;
@@ -220,32 +267,32 @@ body::after {
 
 body::before {
   background-size: 340px 340px;
-  background-image: radial-gradient(1.5px 1.5px at 10% 15%, #fff 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 25% 45%, #fff 100%, transparent 0),
-    radial-gradient(1.1px 1.1px at 40% 10%, #ffcc33 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 60% 30%, #fff 100%, transparent 0),
-    radial-gradient(1.1px 1.1px at 75% 60%, #fff 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 88% 20%, #ffcc33 100%, transparent 0),
-    radial-gradient(1.1px 1.1px at 92% 75%, #fff 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 15% 80%, #fff 100%, transparent 0),
-    radial-gradient(1.1px 1.1px at 50% 85%, #fff 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 70% 90%, #ffcc33 100%, transparent 0),
-    radial-gradient(1.1px 1.1px at 5% 55%, #fff 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 33% 65%, #fff 100%, transparent 0),
-    radial-gradient(1.1px 1.1px at 82% 8%, #fff 100%, transparent 0);
+  background-image: radial-gradient(1.5px 1.5px at 10% 15%, var(--star) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 25% 45%, var(--star) 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 40% 10%, var(--star-accent) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 60% 30%, var(--star) 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 75% 60%, var(--star) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 88% 20%, var(--star-accent) 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 92% 75%, var(--star) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 15% 80%, var(--star) 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 50% 85%, var(--star) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 70% 90%, var(--star-accent) 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 5% 55%, var(--star) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 33% 65%, var(--star) 100%, transparent 0),
+    radial-gradient(1.1px 1.1px at 82% 8%, var(--star) 100%, transparent 0);
   opacity: 0.7; /* antes parpadeaba entre 0.2 y 1; queda fija en su brillo medio */
 }
 
 body::after {
   background-size: 260px 260px;
-  background-image: radial-gradient(1px 1px at 20% 20%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 35% 55%, #ffcc33 100%, transparent 0),
-    radial-gradient(1.3px 1.3px at 55% 15%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 80% 40%, #fff 100%, transparent 0),
-    radial-gradient(1.3px 1.3px at 95% 85%, #ffcc33 100%, transparent 0),
-    radial-gradient(1px 1px at 10% 65%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 65% 75%, #fff 100%, transparent 0),
-    radial-gradient(1.3px 1.3px at 45% 90%, #fff 100%, transparent 0);
+  background-image: radial-gradient(1px 1px at 20% 20%, var(--star) 100%, transparent 0),
+    radial-gradient(1px 1px at 35% 55%, var(--star-accent) 100%, transparent 0),
+    radial-gradient(1.3px 1.3px at 55% 15%, var(--star) 100%, transparent 0),
+    radial-gradient(1px 1px at 80% 40%, var(--star) 100%, transparent 0),
+    radial-gradient(1.3px 1.3px at 95% 85%, var(--star-accent) 100%, transparent 0),
+    radial-gradient(1px 1px at 10% 65%, var(--star) 100%, transparent 0),
+    radial-gradient(1px 1px at 65% 75%, var(--star) 100%, transparent 0),
+    radial-gradient(1.3px 1.3px at 45% 90%, var(--star) 100%, transparent 0);
   animation: twinkle 6s ease-in-out infinite;
 }
 
@@ -266,9 +313,9 @@ body::after {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle 39vw at 17.5vw calc(27.5vw - 10vh), rgba(46, 230, 168, 0.17), transparent 70%),
-    radial-gradient(circle 35vw at 90vw calc(10vh + 25vw), rgba(139, 160, 255, 0.19), transparent 70%),
-    radial-gradient(circle 32vw at 42.5vw calc(115vh - 22.5vw), rgba(255, 204, 51, 0.06), transparent 70%);
+    radial-gradient(circle 39vw at 17.5vw calc(27.5vw - 10vh), var(--glow-1), transparent 70%),
+    radial-gradient(circle 35vw at 90vw calc(10vh + 25vw), var(--glow-2), transparent 70%),
+    radial-gradient(circle 32vw at 42.5vw calc(115vh - 22.5vw), var(--glow-3), transparent 70%);
 }
 
 /* La luna vive en la esquina, por encima de la cabecera de cada página: antes
@@ -278,8 +325,8 @@ body::after {
   top: 20px; right: 24px;
   width: 60px; height: 60px;
   border-radius: 9999px;
-  background: #ffe9a3;
-  box-shadow: 16px -6px 0 3px #070b22, 0 0 40px 8px rgba(255, 204, 51, 0.26);
+  background: var(--moon);
+  box-shadow: 16px -6px 0 3px var(--moon-shade), 0 0 40px 8px var(--moon-glow);
   pointer-events: none;
   z-index: 0;
   animation: drift 9s ease-in-out infinite;
@@ -294,7 +341,7 @@ body::after {
 
 .skyline-back {
   height: 18vh;
-  background: #0a1138;
+  background: var(--skyline-back);
   clip-path: polygon(0% 100%, 0% 55%, 8% 40%, 16% 60%, 24% 30%, 33% 58%, 42% 45%, 50% 65%,
     58% 35%, 67% 55%, 76% 42%, 85% 62%, 93% 38%, 100% 58%, 100% 100%);
   opacity: 0.9;
@@ -302,7 +349,7 @@ body::after {
 
 .skyline-front {
   height: 11vh;
-  background: #05081f;
+  background: var(--skyline-front);
   clip-path: polygon(0% 100%, 0% 70%, 10% 45%, 20% 65%, 30% 40%, 40% 68%, 50% 50%, 60% 70%,
     70% 42%, 80% 66%, 90% 48%, 100% 68%, 100% 100%);
 }
@@ -319,8 +366,73 @@ body::after {
 }
 
 /* Pestaña oculta: se pausan las animaciones activas del fondo. */
+/* ---- Decoraciones de temporada (NightSkyBackground según themes.js) ---- */
+
+/* Nieve sobre el horizonte: la misma silueta que .skyline-front, 4 px más
+   arriba y en blanco; asoma solo en los picos. Estática. */
+.skyline-snow {
+  height: 11vh;
+  background: var(--snow);
+  transform: translateY(-4px);
+  opacity: 0.9;
+  clip-path: polygon(0% 100%, 0% 70%, 10% 45%, 20% 65%, 30% 40%, 40% 68%, 50% 50%, 60% 70%,
+    70% 42%, 80% 66%, 90% 48%, 100% 68%, 100% 100%);
+}
+
+/* Nevada: UNA capa del doble de alto que baja con transform (compositor), sin
+   partículas en el DOM. Solo en pantallas anchas; en móvil y con movimiento
+   reducido no existe. */
+.snowfall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.snowfall-layer {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 200%;
+  background-image:
+    radial-gradient(2px 2px at 12% 18%, var(--snow) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 38% 42%, var(--snow) 100%, transparent 0),
+    radial-gradient(2.5px 2.5px at 66% 12%, var(--snow) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 84% 58%, var(--snow) 100%, transparent 0),
+    radial-gradient(2px 2px at 24% 76%, var(--snow) 100%, transparent 0),
+    radial-gradient(1.5px 1.5px at 56% 88%, var(--snow) 100%, transparent 0);
+  background-size: 260px 260px;
+  opacity: 0.55;
+  animation: snow-fall 60s linear infinite;
+}
+@media (max-width: 640px) {
+  .snowfall { display: none; }
+}
+
+/* Calabazas sobre el horizonte (Halloween). Estáticas, con un brillo cálido fijo. */
+.pumpkin {
+  position: fixed;
+  bottom: 3vh;
+  width: 34px;
+  height: 30px;
+  pointer-events: none;
+  z-index: 0;
+  color: var(--color-accent);
+  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--color-accent) 45%, transparent));
+}
+@media (max-width: 640px) {
+  .pumpkin { width: 24px; height: 21px; }
+  .pumpkin:nth-of-type(3) { display: none; }
+}
+
+/* Lo que cruza el cielo (dragones, murciélagos, corazones, pétalos) toma el
+   color del tema. */
+.flying-dragon {
+  color: var(--flyer-color);
+}
+
 html[data-sky-paused] body::after,
 html[data-sky-paused] .moon-glow,
+html[data-sky-paused] .snowfall-layer,
 html[data-sky-paused] .flying-dragon {
   animation-play-state: paused;
 }
@@ -357,47 +469,47 @@ html[data-sky-paused] .flying-dragon {
 
 .btn-primary {
   color: var(--color-on-accent);
-  background-image: linear-gradient(100deg, var(--color-accent) 0%, #ffe08a 45%, var(--color-accent) 100%);
+  background-image: linear-gradient(100deg, var(--color-accent) 0%, var(--accent-mid) 45%, var(--color-accent) 100%);
   background-size: 200% 100%;
   box-shadow: var(--shadow-gold);
 }
 
 .btn-secondary {
   color: var(--color-secondary);
-  background-color: rgba(139, 160, 255, 0.08);
-  border-color: rgba(139, 160, 255, 0.32);
+  background-color: color-mix(in oklab, var(--color-secondary) 8%, transparent);
+  border-color: color-mix(in oklab, var(--color-secondary) 32%, transparent);
 }
 
 .btn-ghost {
   color: var(--color-fg-muted);
   border-color: var(--color-border);
-  background-color: rgba(20, 29, 77, 0.4);
+  background-color: color-mix(in oklab, var(--color-surface) 40%, transparent);
 }
 
 .btn-danger {
   color: var(--color-danger);
-  border-color: rgba(255, 128, 149, 0.34);
-  background-color: rgba(255, 128, 149, 0.06);
+  border-color: color-mix(in oklab, var(--color-danger) 34%, transparent);
+  background-color: color-mix(in oklab, var(--color-danger) 6%, transparent);
 }
 
 /* Hover solo en dispositivos que lo admiten (en táctil un toque dispara
    hovers falsos). Igual que hacen las utilidades hover: de Tailwind 4. */
 @media (hover: hover) {
   .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 18px 40px -12px rgba(255, 204, 51, 0.6);
+    box-shadow: 0 18px 40px -12px color-mix(in oklab, var(--color-accent) 60%, transparent);
   }
   .btn-secondary:hover:not(:disabled) {
-    background-color: rgba(139, 160, 255, 0.16);
-    border-color: rgba(139, 160, 255, 0.6);
+    background-color: color-mix(in oklab, var(--color-secondary) 16%, transparent);
+    border-color: color-mix(in oklab, var(--color-secondary) 60%, transparent);
   }
   .btn-ghost:hover:not(:disabled) {
     color: var(--color-accent);
     border-color: var(--color-border-accent);
-    background-color: rgba(20, 29, 77, 0.75);
+    background-color: color-mix(in oklab, var(--color-surface) 75%, transparent);
   }
   .btn-danger:hover:not(:disabled) {
-    background-color: rgba(255, 128, 149, 0.15);
-    border-color: rgba(255, 128, 149, 0.6);
+    background-color: color-mix(in oklab, var(--color-danger) 15%, transparent);
+    border-color: color-mix(in oklab, var(--color-danger) 60%, transparent);
   }
 }
 
@@ -413,7 +525,7 @@ html[data-sky-paused] .flying-dragon {
 /* Feedback de pulsación: va después de los hovers para prevalecer sobre ellos. */
 .btn-primary:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
-  box-shadow: 0 6px 16px -8px rgba(255, 204, 51, 0.6);
+  box-shadow: 0 6px 16px -8px color-mix(in oklab, var(--color-accent) 60%, transparent);
 }
 .btn-secondary:active:not(:disabled) { transform: translateY(0) scale(0.98); }
 .btn-ghost:active:not(:disabled) { transform: scale(0.98); }
@@ -433,7 +545,7 @@ html[data-sky-paused] .flying-dragon {
   border-radius: 9999px;
   border: 1px solid var(--color-border);
   color: var(--color-fg-muted);
-  background-color: rgba(20, 29, 77, 0.55);
+  background-color: color-mix(in oklab, var(--color-surface) 55%, transparent);
   /* Antes `all`: el hover cambia color, borde y posición; disabled, opacidad. */
   transition-property: color, border-color, background-color, transform, opacity;
   transition-duration: var(--duration-base);
@@ -486,8 +598,8 @@ html[data-sky-paused] .flying-dragon {
 .surface-glass {
   background: linear-gradient(
     150deg,
-    rgba(24, 36, 89, 0.78) 0%,
-    rgba(11, 17, 48, 0.72) 100%
+    color-mix(in oklab, var(--color-surface-raised) 78%, transparent) 0%,
+    color-mix(in oklab, var(--color-canvas-raised) 72%, transparent) 100%
   );
   backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid var(--color-border);
@@ -504,7 +616,7 @@ html[data-sky-paused] .flying-dragon {
 @media (hover: hover) {
   .card-hover:hover {
     border-color: var(--color-border-accent);
-    box-shadow: 0 26px 54px -22px rgba(255, 204, 51, 0.4), var(--shadow-elevated);
+    box-shadow: 0 26px 54px -22px color-mix(in oklab, var(--color-accent) 40%, transparent), var(--shadow-elevated);
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -521,7 +633,7 @@ html[data-sky-paused] .flying-dragon {
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 204, 51, 0.7), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-accent) 70%, transparent), transparent);
 }
 
 /* Etiquetas / chips */
@@ -531,14 +643,14 @@ html[data-sky-paused] .flying-dragon {
   gap: 0.4rem;
   border-radius: 9999px;
   border: 1px solid var(--color-border);
-  background-color: rgba(139, 160, 255, 0.08);
+  background-color: color-mix(in oklab, var(--color-secondary) 8%, transparent);
   color: var(--color-fg-muted);
   font-size: 0.75rem;
   padding: 0.3rem 0.75rem;
 }
 .chip-gold {
   border-color: var(--color-border-accent);
-  background-color: rgba(255, 204, 51, 0.1);
+  background-color: color-mix(in oklab, var(--color-accent) 10%, transparent);
   color: var(--color-accent);
 }
 
@@ -552,7 +664,7 @@ html[data-sky-paused] .flying-dragon {
 }
 
 .title-gold {
-  background: linear-gradient(100deg, #ffcc33, #ffe9a3 55%, #ffcc33);
+  background: linear-gradient(100deg, var(--color-accent), var(--color-accent-soft) 55%, var(--color-accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -579,7 +691,7 @@ html[data-sky-paused] .flying-dragon {
   width: 100%;
   border-radius: 0.9rem;
   border: 1px solid var(--color-border);
-  background-color: rgba(7, 11, 34, 0.55);
+  background-color: color-mix(in oklab, var(--color-canvas) 55%, transparent);
   color: var(--color-fg);
   padding: 0.7rem 1rem;
   font-size: 0.9375rem;
@@ -588,14 +700,14 @@ html[data-sky-paused] .flying-dragon {
   transition-duration: var(--duration-base);
   transition-timing-function: var(--ease-out);
 }
-.field::placeholder { color: rgba(174, 184, 230, 0.5); }
+.field::placeholder { color: color-mix(in oklab, var(--color-fg-muted) 50%, transparent); }
 @media (hover: hover) {
-  .field:hover:not(:disabled) { border-color: rgba(139, 160, 255, 0.38); }
+  .field:hover:not(:disabled) { border-color: color-mix(in oklab, var(--color-secondary) 38%, transparent); }
 }
 .field:focus {
   border-color: var(--color-accent);
-  background-color: rgba(7, 11, 34, 0.8);
-  box-shadow: 0 0 0 3px rgba(255, 204, 51, 0.16);
+  background-color: color-mix(in oklab, var(--color-canvas) 80%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 16%, transparent);
 }
 .field:disabled { opacity: 0.5; cursor: not-allowed; }
 textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
@@ -607,7 +719,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   justify-content: center;
   border-radius: 1.25rem;
   border: 2px dashed var(--color-border);
-  background-color: rgba(20, 29, 77, 0.35);
+  background-color: color-mix(in oklab, var(--color-surface) 35%, transparent);
   color: var(--color-fg-muted);
   cursor: pointer;
   text-align: center;
@@ -621,7 +733,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   .dropzone:hover {
     border-color: var(--color-border-accent);
     color: var(--color-accent);
-    background-color: rgba(20, 29, 77, 0.6);
+    background-color: color-mix(in oklab, var(--color-surface) 60%, transparent);
   }
 }
 
@@ -642,11 +754,11 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   transition-timing-function: ease;
 }
 @media (hover: hover) {
-  .pill-option:hover { border-color: rgba(255, 204, 51, 0.45); color: var(--color-fg); }
+  .pill-option:hover { border-color: color-mix(in oklab, var(--color-accent) 45%, transparent); color: var(--color-fg); }
 }
 .pill-option[data-selected="true"] {
   border-color: var(--color-accent);
-  background-color: rgba(255, 204, 51, 0.12);
+  background-color: color-mix(in oklab, var(--color-accent) 12%, transparent);
   color: var(--color-accent);
 }
 
@@ -669,7 +781,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
 @media (hover: hover) {
   .nav-link:hover {
     color: var(--color-fg);
-    background-color: rgba(139, 160, 255, 0.1);
+    background-color: color-mix(in oklab, var(--color-secondary) 10%, transparent);
   }
 }
 /* NavLink marca la ruta activa con aria-current="page". (Antes el estilo
@@ -678,7 +790,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
 .nav-link[aria-current="page"] {
   color: var(--color-accent);
   font-weight: 600;
-  background-color: rgba(255, 204, 51, 0.1);
+  background-color: color-mix(in oklab, var(--color-accent) 10%, transparent);
 }
 .nav-link[aria-current="page"]::before {
   content: "";
@@ -690,7 +802,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   height: 1.1rem;
   border-radius: 9999px;
   background: var(--color-accent);
-  box-shadow: 0 0 12px rgba(255, 204, 51, 0.7);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--color-accent) 70%, transparent);
 }
 
 /* Drawer móvil (<dialog> en Sidebar.jsx). Entrada 280 ms con curva de
@@ -792,14 +904,14 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
 .skeleton {
   position: relative;
   overflow: hidden;
-  background-color: rgba(139, 160, 255, 0.08);
+  background-color: color-mix(in oklab, var(--color-secondary) 8%, transparent);
   border-radius: 1rem;
 }
 .skeleton::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(139, 160, 255, 0.16), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-secondary) 16%, transparent), transparent);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -840,7 +952,7 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
   .moon-glow {
     top: calc(74px + env(safe-area-inset-top)); right: 12px;
     width: 34px; height: 34px;
-    box-shadow: 9px -4px 0 2px #070b22, 0 0 22px 5px rgba(255, 204, 51, 0.22);
+    box-shadow: 9px -4px 0 2px var(--moon-shade), 0 0 22px 5px var(--moon-glow);
     opacity: 0.85;
   }
   .btn { padding: 0.7rem 1.15rem; }
@@ -864,6 +976,8 @@ textarea.field { resize: vertical; min-height: 5.5rem; line-height: 1.6; }
     animation-delay: 0s !important;
     scroll-behavior: auto !important;
   }
+
+  .snowfall { display: none; }
 
   /* Las entradas se mantienen como un fundido breve, sin desplazamiento. */
   .fade-in-up {

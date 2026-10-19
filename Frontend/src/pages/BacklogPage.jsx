@@ -292,7 +292,7 @@ export default function BacklogPage() {
 
           <DragOverlay>
             {activeIdea && (
-              <div className="rotate-2 rounded-2xl border border-ink-dark/40 bg-card p-3 shadow-[0_20px_44px_-14px_rgba(3,6,20,0.85)]">
+              <div className="rotate-2 rounded-2xl border border-ink-dark/40 bg-card p-3 shadow-overlay">
                 <p className="font-hand text-xl leading-tight text-ink-dark">{activeIdea.titulo}</p>
               </div>
             )}

@@ -84,7 +84,7 @@ export default function Carousel({ photos, alt, onDelete, label = 'Fotos' }) {
           const polaroid = (
             <div
               className={`relative rounded-md border border-ink-dark/25 bg-polaroid p-2.5 pb-4 ${
-                isCenter ? 'shadow-[0_28px_54px_-16px_rgba(3,6,20,0.9)]' : 'shadow-[0_14px_28px_rgba(3,6,20,0.5)]'
+                isCenter ? 'shadow-photo' : 'shadow-photo-side'
               }`}
             >
               <div className="aspect-square overflow-hidden bg-polaroid-mat">

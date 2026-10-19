@@ -1,0 +1,194 @@
+/* =========================================================================
+   Temas de temporada
+   -------------------------------------------------------------------------
+   Cada bloque redefine SOLO tokens (los de @theme en index.css y los de
+   escena de :root). Ningún componente conoce los temas: botones, chips,
+   campos, polaroids, calendario, galería, navegación y diálogos heredan estos
+   tokens. Por eso un tema no puede "contaminar" a otro: no hay reglas de
+   componentes aquí, solo valores.
+
+   El tema predeterminado (noche) usa los valores de index.css y no necesita
+   bloque. ThemeProvider pone <html data-season="<id>">.
+
+   Contraste comprobado (WCAG 2.x) para texto, texto secundario, acentos,
+   enlaces, estados y polaroids sobre canvas/surface/surface-raised: todos
+   >= 4.5:1 (peor caso de los cinco temas: 5.66:1).
+
+   Tokens por tema:
+     color-*         paleta semántica (superficies, texto, acentos, estados,
+                     bordes, polaroids, cinta, sombras)
+     --sky-1..5      degradado del cielo (arriba → abajo)
+     --star, --star-accent        estrellas
+     --glow-1..3     resplandores ambientales
+     --moon, --moon-shade, --moon-glow   luna (shade transparente = llena)
+     --skyline-back, --skyline-front, --snow   horizonte
+     --flyer-color   color de lo que cruza el cielo (dragones, murciélagos…)
+   ========================================================================= */
+
+/* ---------------------------- Halloween romántico ---------------------------- */
+:root[data-season="halloween"] {
+  --color-canvas: #110a1d;
+  --color-canvas-raised: #170d28;
+  --color-surface: #241540;
+  --color-surface-raised: #2d1b4e;
+  --color-fg: #f7effc;
+  --color-fg-muted: #c9b6e0;
+  --color-accent: #ffa94d;
+  --color-accent-soft: #ffd9a8;
+  --color-on-accent: #2a1300;
+  --color-secondary: #c4a1ff;
+  --color-secondary-strong: #5b2ea6;
+  --color-passion: #ff8a7a;
+  --color-border: color-mix(in oklab, var(--color-secondary) 20%, transparent);
+  --color-border-accent: color-mix(in oklab, var(--color-accent) 34%, transparent);
+  --color-polaroid: #2a1745;
+  --color-polaroid-mat: #170c27;
+  --color-polaroid-ink: #ffd9a8;
+  --color-polaroid-ink-soft: #cdbbe6;
+  --color-tape: #ffb565;
+  --color-shadow: #07030d;
+
+  --sky-1: #08040f;
+  --sky-2: #110a1d;
+  --sky-3: #1b0f30;
+  --sky-4: #261543;
+  --sky-5: #2d1b4e;
+  --star: #f5ecff;
+  --star-accent: #ffa94d;
+  --glow-1: rgba(255, 140, 40, 0.14);
+  --glow-2: color-mix(in oklab, var(--color-secondary) 22%, transparent);
+  --glow-3: rgba(255, 169, 77, 0.09);
+  --moon: #ffd29a;
+  --moon-shade: transparent; /* luna llena */
+  --moon-glow: rgba(255, 150, 60, 0.36);
+  --skyline-back: #1c0f30;
+  --skyline-front: #0b0614;
+  --flyer-color: #06030b;
+}
+
+/* ------------------------------ Navidad mágica ------------------------------ */
+:root[data-season="navidad"] {
+  --color-canvas: #06121f;
+  --color-canvas-raised: #0a1a2a;
+  --color-surface: #0f2c2a;
+  --color-surface-raised: #143633;
+  --color-fg: #f2f7f3;
+  --color-fg-muted: #b6d0c6;
+  --color-accent: #f2c75c;
+  --color-accent-soft: #fbe5a6;
+  --color-on-accent: #1c1400;
+  --color-secondary: #9fd6c3;
+  --color-secondary-strong: #1f6b55;
+  --color-passion: #ff7b84;
+  --color-border: color-mix(in oklab, var(--color-secondary) 18%, transparent);
+  --color-border-accent: color-mix(in oklab, var(--color-accent) 32%, transparent);
+  --color-polaroid: #12302d;
+  --color-polaroid-mat: #0a1f1d;
+  --color-polaroid-ink: #fbe5a6;
+  --color-polaroid-ink-soft: #b9d2c8;
+  --color-tape: #d6505a; /* lazo rojo, el rojo discreto del tema */
+  --color-shadow: #020a0f;
+
+  --sky-1: #030a12;
+  --sky-2: #06121f;
+  --sky-3: #0a1d2e;
+  --sky-4: #0d2832;
+  --sky-5: #10302d;
+  --star: #ffffff;
+  --star-accent: #f2c75c;
+  --glow-1: rgba(60, 180, 130, 0.14);
+  --glow-2: rgba(214, 80, 90, 0.08);
+  --glow-3: rgba(242, 199, 92, 0.08);
+  --moon: #f4f1e4;
+  --moon-glow: rgba(220, 235, 255, 0.22);
+  --skyline-back: #0b2030;
+  --skyline-front: #050d16;
+  --snow: #e9f1fb;
+}
+
+/* ------------------------------- San Valentín ------------------------------- */
+:root[data-season="sanvalentin"] {
+  --color-canvas: #19060f;
+  --color-canvas-raised: #210a15;
+  --color-surface: #3a1024;
+  --color-surface-raised: #46142c;
+  --color-fg: #fff0f4;
+  --color-fg-muted: #ebbfcd;
+  --color-accent: #f4c26b;
+  --color-accent-soft: #ffe3b0;
+  --color-on-accent: #2b1500;
+  --color-secondary: #f5adc2;
+  --color-secondary-strong: #8c2a4f;
+  --color-passion: #ff7a98;
+  /* Mismo significado que en el resto de temas, algo más claros para
+     mantener el contraste sobre el borgoña. */
+  --color-danger: #ff9aa9;
+  --color-success: #6be8bd;
+  --color-border: color-mix(in oklab, var(--color-secondary) 20%, transparent);
+  --color-border-accent: color-mix(in oklab, var(--color-accent) 34%, transparent);
+  --color-polaroid: #3e1227;
+  --color-polaroid-mat: #24081a;
+  --color-polaroid-ink: #ffe3b0;
+  --color-polaroid-ink-soft: #ecc2d0;
+  --color-tape: #f6b5c8;
+  --color-shadow: #0c0206;
+
+  --sky-1: #0f0309;
+  --sky-2: #19060f;
+  --sky-3: #28091a;
+  --sky-4: #380f24;
+  --sky-5: #46142c;
+  --star: #fff2f6;
+  --star-accent: #f4c26b;
+  --glow-1: rgba(245, 120, 160, 0.16);
+  --glow-2: rgba(160, 40, 90, 0.18);
+  --glow-3: rgba(244, 194, 107, 0.07);
+  --moon: #ffe6ec;
+  --moon-glow: rgba(255, 170, 200, 0.3);
+  --skyline-back: #2a0b1b;
+  --skyline-front: #12040a;
+  --flyer-color: #ff8fab;
+}
+
+/* -------------------------- Primavera y aniversario -------------------------- */
+:root[data-season="primavera"] {
+  --color-canvas: #17122b;
+  --color-canvas-raised: #1d1735;
+  --color-surface: #2c2350;
+  --color-surface-raised: #352a5d;
+  --color-fg: #fbf6ff;
+  --color-fg-muted: #d8caf0;
+  --color-accent: #f6cf7a;
+  --color-accent-soft: #fff0c8;
+  --color-on-accent: #2a1d00;
+  --color-secondary: #eab6dc;
+  --color-secondary-strong: #7d4f9e;
+  --color-passion: #ff8fb1;
+  --color-danger: #ff8fa3;
+  --color-success: #62e6b8;
+  --color-border: color-mix(in oklab, var(--color-secondary) 20%, transparent);
+  --color-border-accent: color-mix(in oklab, var(--color-accent) 34%, transparent);
+  --color-polaroid: #382b5e;
+  --color-polaroid-mat: #241c40;
+  --color-polaroid-ink: #fff0c8;
+  --color-polaroid-ink-soft: #d9cdef;
+  --color-tape: #f3bfe0;
+  --color-shadow: #08060f;
+
+  /* Crepúsculo: el cielo se aclara hacia el horizonte (ambiente luminoso). */
+  --sky-1: #100c20;
+  --sky-2: #17122b;
+  --sky-3: #241b41;
+  --sky-4: #362957;
+  --sky-5: #463466;
+  --star: #fff6fb;
+  --star-accent: #f6cf7a;
+  --glow-1: rgba(255, 170, 210, 0.2);
+  --glow-2: rgba(190, 160, 255, 0.22);
+  --glow-3: rgba(246, 207, 122, 0.12);
+  --moon: #fff4dc;
+  --moon-glow: rgba(255, 220, 180, 0.32);
+  --skyline-back: #2b2147;
+  --skyline-front: #140f26;
+  --flyer-color: #f7b8d6;
+}

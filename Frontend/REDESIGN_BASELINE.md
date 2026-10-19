@@ -336,3 +336,62 @@ Una pantalla por commit; en cada una: revisión de componentes, API, estados y p
 **Estado final de la etapa 4**: 105 pruebas en 17 archivos (antes de la etapa 0: 0); lint con el mismo aviso preexistente; sin `transition-all`, `confirm()` ni `.eyebrow` en el código.
 
 **Pendiente (fuera del frontend)**: `GET /api/citas/gallery` responde 500 en el backend local.
+
+---
+
+# Temas de temporada
+
+Rama: `temas-estacionales` (desde `rediseno-ui`). Noche estrellada sigue siendo el tema predeterminado.
+
+## Arquitectura
+
+| Archivo | Responsabilidad |
+|---|---|
+| `src/themes/themes.js` | Qué es cada tema: id, nombre, descripción, color de la barra del navegador y decoraciones (`luna`, `volador`, `suelo`, `nevada`). |
+| `src/themes/seasons.js` | Cuándo se activa: periodos `MM-DD` (pueden cruzar el fin de año), `prioridad`, aniversario configurable (`ANIVERSARIO.mes/dia`, desactivado por defecto) y `resolveSeason(fecha)` (función pura). |
+| `src/themes/seasons.css` | Paleta de cada tema: `:root[data-season="<id>"]` que **solo redefine tokens** (no hay reglas de componentes, así que un tema no puede contaminar a otro). |
+| `src/themes/ThemeProvider.jsx` | Preferencia (`auto` o un tema) en `localStorage` (`nlc:tema`) con acceso seguro; aplica `<html data-season>` y `meta[theme-color]`; reevalúa la fecha al volver a la pestaña y cada hora; sincroniza pestañas. |
+| `src/themes/themeContext.js` | Contexto y `useSeasonTheme()`; sin proveedor vale el tema predeterminado. |
+| `index.html` | Script mínimo que aplica el último tema (`nlc:tema-aplicado`) antes del primer pintado. |
+| `src/components/ThemeSelect.jsx` | Selector (`<select>` nativo) en la barra lateral y el menú móvil. |
+
+**Reglas**: la elección manual prevalece siempre y un cambio de fecha nunca la sobrescribe; un valor guardado desconocido se trata como «Automático» sin borrarlo; sin almacenamiento disponible, la elección vale para la sesión. Coincidencias de temporadas: mayor prioridad → periodo más corto → orden de la lista. Sin temporada activa: Noche estrellada.
+
+## Temporadas por defecto
+
+| Tema | Periodo | Decoración |
+|---|---|---|
+| Halloween romántico | 15 oct – 2 nov | Luna llena, murciélagos ocasionales, calabazas estáticas |
+| Navidad mágica | 1 dic – 6 ene | Nieve estática en el horizonte, nevada ligera (solo pantallas anchas) |
+| San Valentín | 7 – 15 feb | Corazones ocasionales |
+| Primavera y aniversario | 20 mar – 20 abr, y ±3 días del aniversario | Pétalos ocasionales, cielo de crepúsculo |
+
+## Cómo añadir o cambiar una temporada
+
+1. Tema nuevo: entrada en `themes.js` + bloque de tokens en `seasons.css` (copiar uno existente) y comprobar el contraste (texto ≥ 4.5:1).
+2. Fechas: entrada en `SEASONS` (`seasons.js`). Desactivar una temporada = quitar su entrada (el tema sigue disponible en el selector).
+3. Aniversario: rellenar `ANIVERSARIO.mes` y `ANIVERSARIO.dia`.
+
+## Migración de colores
+
+- `index.css`: 43 `rgba()` del sistema → `color-mix()` sobre su token; cielo, estrellas, resplandor, luna y horizonte → variables de escena (`--sky-*`, `--star*`, `--glow-*`, `--moon*`, `--skyline-*`, `--snow`, `--flyer-color`). Quedan solo neutros intencionados (negro/blanco del visor de fotos, sombra de la cinta).
+- JSX: sombras y brillos arbitrarios → tokens con nombre (`shadow-polaroid`, `shadow-photo`, `drop-shadow-glow`…); `text-[#ff8095]` y `rose-400` → `passion`; paginación → `bg-accent`. Ningún color de temporada está escrito en un componente.
+- Éxito y error conservan su significado (verde y rojo) en todos los temas; en San Valentín y Primavera son algo más claros para mantener el contraste.
+
+## Verificación
+
+| Comprobación | Resultado |
+|---|---|
+| Pruebas | 126/126 (21 nuevas: resolución de fechas, proveedor, selector, decoraciones) |
+| Lint | Igual que antes (1 aviso preexistente) |
+| Build | CSS 86.45 kB (15.41 gzip, +2.36 kB), JS 429.06 kB (135.62 gzip, +2.58 kB) |
+| Tema predeterminado sin cambios | Estilos calculados equivalentes (rgba ↔ oklab) y diferencia de píxeles 0–0.74 % en 5 pantallas, explicada (degradado de botones; puerto en el link de invitación) |
+| Contraste | 5 paletas, 19 parejas cada una: peor caso 5.66:1 |
+| Chrome: 5 temas × 375/768/1024/1440 × 4 pantallas | 80 combinaciones: tema correcto, sin desbordamiento, con `<h1>` |
+| Comportamiento | Persistencia al recargar, aplicación antes de React, selector con la barra colapsada, vuelta a Automático, movimiento reducido sin voladores ni nevada, nevada oculta en móvil, máximo 3 animaciones continuas (Navidad) |
+
+## Limitaciones
+
+- Las calabazas y la nieve del horizonte viven en el fondo fijo: el contenido y el pie las tapan en buena parte de las pantallas, como al propio horizonte.
+- El primer acceso de un dispositivo, antes de que exista `nlc:tema-aplicado`, puede mostrar un instante el tema predeterminado.
+- El selector no está en Login y Registro (no tienen barra lateral); allí se aplica la preferencia guardada o el tema automático.

@@ -21,7 +21,7 @@ export default function Pagination({ page, totalPages, onChange, label = 'Pagina
           aria-current={p === page ? 'page' : undefined}
           className={
             p === page
-              ? 'grid h-9 w-9 place-items-center rounded-full bg-linear-to-r from-ink-dark to-amber-300 font-display text-sm font-semibold tabular-nums text-on-accent shadow-[0_8px_24px_-8px_rgba(255,204,51,0.7)] pointer-coarse:h-11 pointer-coarse:w-11'
+              ? 'grid h-9 w-9 place-items-center rounded-full bg-accent font-display text-sm font-semibold tabular-nums text-on-accent shadow-accent-glow pointer-coarse:h-11 pointer-coarse:w-11'
               : 'icon-btn font-display text-sm tabular-nums'
           }
         >

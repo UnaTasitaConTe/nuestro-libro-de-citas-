@@ -27,12 +27,12 @@ export default function HeartRating({
 }) {
   const colors =
     variant === 'polaroid'
-      ? { filled: 'text-[#ff8095]', empty: 'text-[#ff8095]/25' }
+      ? { filled: 'text-passion', empty: 'text-passion/25' }
       : { filled: 'text-ink-dark', empty: 'text-ink/35' };
 
   function heartClass(filled) {
     return `${filled ? colors.filled : colors.empty} ${
-      filled && variant === 'gold' ? 'drop-shadow-[0_0_8px_rgba(255,204,51,0.45)]' : ''
+      filled && variant === 'gold' ? 'drop-shadow-glow-sm' : ''
     }`;
   }
 

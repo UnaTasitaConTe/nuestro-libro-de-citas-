@@ -10,11 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Palette,
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DragonIcon from './DragonIcon';
 import useModalDialog from './ui/useModalDialog';
+import ThemeSelect from './ThemeSelect';
+import { useSeasonTheme } from '../themes/themeContext';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Nuestras citas', Icon: BookHeart, end: true },
@@ -26,6 +29,7 @@ const NAV_ITEMS = [
 
 const DRAWER_ID = 'menu-movil';
 const DESKTOP_QUERY = '(min-width: 768px)';
+const THEME_SELECT_DESKTOP = 'tema-escritorio';
 
 function NavLinks({ collapsed, onNavigate }) {
   return (
@@ -59,7 +63,7 @@ function Brand({ collapsed = false, onNavigate, compact = false }) {
         compact ? 'py-0' : 'py-6'
       }`}
     >
-      <DragonIcon className="h-10 w-10 shrink-0 drop-shadow-[0_0_12px_rgba(255,204,51,0.35)] transition-transform duration-300 group-hover:scale-105" />
+      <DragonIcon className="h-10 w-10 shrink-0 drop-shadow-glow transition-transform duration-300 group-hover:scale-105" />
       {!collapsed && (
         <span className="min-w-0">
           <span className="block font-display text-[0.95rem] font-semibold leading-tight text-ink-strong">
@@ -129,6 +133,13 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const menuButtonRef = useRef(null);
+  const { activeTheme } = useSeasonTheme();
+
+  // Barra colapsada: el botón de tema la expande y lleva el foco al selector.
+  function openThemeSelect() {
+    onToggleCollapsed();
+    requestAnimationFrame(() => document.getElementById(THEME_SELECT_DESKTOP)?.focus());
+  }
 
   // El drawer solo existe en móvil: si la ventana pasa a escritorio, se cierra.
   useEffect(() => {
@@ -202,6 +213,22 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
         {user && (
           <div className={`border-t border-line pb-6 pt-4 ${collapsed ? 'px-2' : 'px-4'}`}>
             {!collapsed && <UserCard name={user.name} />}
+            {collapsed ? (
+              <button
+                type="button"
+                onClick={openThemeSelect}
+                title={`Tema: ${activeTheme.nombre}`}
+                aria-label={`Tema: ${activeTheme.nombre}. Expandir el menú para cambiarlo`}
+                className="nav-link mb-1 w-full"
+                style={{ justifyContent: 'center', paddingInline: 0 }}
+              >
+                <Palette className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+              </button>
+            ) : (
+              <div className="mb-3 px-1">
+                <ThemeSelect id={THEME_SELECT_DESKTOP} />
+              </div>
+            )}
             <button
               type="button"
               onClick={handleLogout}
@@ -239,6 +266,9 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
 
           <div className="border-t border-line px-4 pb-6 pt-4">
             <UserCard name={user.name} />
+            <div className="mb-3 px-1">
+              <ThemeSelect id="tema-movil" />
+            </div>
             <button type="button" onClick={handleLogout} className="nav-link w-full">
               <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.75} />
               Salir

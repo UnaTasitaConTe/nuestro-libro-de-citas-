@@ -35,7 +35,7 @@ describe('CitaEditPage', () => {
 
   it('no muestra el formulario vacío mientras carga', async () => {
     renderPage();
-    expect(screen.getByRole('status')).toHaveTextContent('Cargando la cita…');
+    expect(screen.getAllByRole('status').some((s) => s.textContent === 'Cargando la cita…')).toBe(true);
     expect(screen.queryByLabelText('Nombre de la cita')).not.toBeInTheDocument();
     expect(await screen.findByLabelText('Nombre de la cita')).toHaveValue('Picnic');
     expect(screen.getByLabelText('Fecha')).toHaveValue('2026-05-02');

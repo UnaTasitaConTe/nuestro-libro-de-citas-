@@ -180,7 +180,7 @@ describe('CitaDetailPage: estructura y accesibilidad', () => {
 
   it('anuncia la carga y después muestra el nombre de la cita como <h1>', async () => {
     renderPage();
-    expect(screen.getByRole('status')).toHaveTextContent('Cargando la cita…');
+    expect(screen.getAllByRole('status').some((s) => s.textContent === 'Cargando la cita…')).toBe(true);
     expect(await screen.findByRole('heading', { level: 1, name: 'Cena en la playa' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Versión de Ana' })).toBeInTheDocument();
   });

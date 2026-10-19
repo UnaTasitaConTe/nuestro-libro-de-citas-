@@ -30,7 +30,7 @@ function EntryView({ entry, delay, index }) {
   return (
     <article
       aria-labelledby={headingId}
-      className="fade-in-up relative rounded-md border border-ink-dark/30 bg-polaroid p-5 shadow-[0_16px_38px_rgba(3,6,20,0.6)] sm:p-6"
+      className="fade-in-up relative rounded-md border border-ink-dark/30 bg-polaroid p-5 shadow-polaroid-lg sm:p-6"
       style={{
         animationDelay: `${delay}s`,
         rotate: `${ENTRY_TILTS[index % ENTRY_TILTS.length]}deg`,
