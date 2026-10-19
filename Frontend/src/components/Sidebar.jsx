@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   BookHeart,
@@ -23,6 +23,11 @@ const NAV_ITEMS = [
   { to: '/pareja', label: 'Invitar', Icon: Mail },
 ];
 
+const DRAWER_ID = 'menu-movil';
+const DESKTOP_QUERY = '(min-width: 768px)';
+// Respaldo por si no llega transitionend (p. ej. transiciones desactivadas).
+const DRAWER_EXIT_FALLBACK_MS = 400;
+
 function NavLinks({ collapsed, onNavigate }) {
   return (
     <>
@@ -33,19 +38,12 @@ function NavLinks({ collapsed, onNavigate }) {
           end={end}
           onClick={onNavigate}
           title={collapsed ? label : undefined}
+          aria-label={collapsed ? label : undefined}
           className="nav-link"
           style={collapsed ? { justifyContent: 'center', paddingInline: 0 } : undefined}
         >
-          {({ isActive }) => (
-            <span
-              data-active={isActive}
-              className="flex w-full items-center gap-3"
-              style={collapsed ? { justifyContent: 'center' } : undefined}
-            >
-              <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
-              {!collapsed && <span className="truncate">{label}</span>}
-            </span>
-          )}
+          <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+          {!collapsed && <span className="truncate">{label}</span>}
         </NavLink>
       ))}
     </>
@@ -57,6 +55,7 @@ function Brand({ collapsed = false, onNavigate, compact = false }) {
     <Link
       to="/"
       onClick={onNavigate}
+      aria-label={collapsed ? 'Nuestro Libro de Citas, inicio' : undefined}
       className={`group flex items-center gap-3 ${collapsed ? 'justify-center px-0' : 'px-5'} ${
         compact ? 'py-0' : 'py-6'
       }`}
@@ -76,10 +75,137 @@ function Brand({ collapsed = false, onNavigate, compact = false }) {
   );
 }
 
+function UserCard({ name }) {
+  return (
+    <div className="mb-3 flex min-w-0 items-center gap-3 rounded-2xl border border-line bg-card/50 px-3 py-2.5">
+      <span
+        aria-hidden="true"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-dark/15 font-display text-sm font-semibold text-ink-dark"
+      >
+        {name?.[0]?.toUpperCase() ?? '♥'}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[0.7rem] uppercase tracking-widest text-ink/60">Hola</span>
+        <span className="block truncate text-sm font-medium text-ink-strong">{name}</span>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Drawer móvil sobre <dialog> modal: el resto de la página queda inerte,
+ * Escape lo cierra y el foco vuelve al botón que lo abrió.
+ * La animación la controla `data-state` (ver .drawer en index.css).
+ */
+function MobileDrawer({ open, onClose, returnFocusRef, children }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return undefined;
+
+    if (open) {
+      if (!dialog.open) dialog.showModal();
+      // Un frame con el estado cerrado para que la entrada tenga desde dónde animar.
+      const frame = requestAnimationFrame(() => {
+        dialog.dataset.state = 'open';
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+
+    if (!dialog.open) {
+      delete dialog.dataset.state;
+      return undefined;
+    }
+
+    // Salida: se anima y después se cierra el diálogo.
+    dialog.dataset.state = 'closing';
+    let finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      dialog.close();
+      delete dialog.dataset.state;
+      returnFocusRef.current?.focus();
+    }
+    function onTransitionEnd(event) {
+      if (event.target.hasAttribute('data-drawer-part')) finish();
+    }
+    dialog.addEventListener('transitionend', onTransitionEnd);
+    const fallback = setTimeout(finish, DRAWER_EXIT_FALLBACK_MS);
+    return () => {
+      dialog.removeEventListener('transitionend', onTransitionEnd);
+      clearTimeout(fallback);
+    };
+  }, [open, returnFocusRef]);
+
+  // Bloquea el scroll del documento mientras el menú está abierto.
+  useEffect(() => {
+    if (!open) return undefined;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, [open]);
+
+  function handleCancel(event) {
+    // Escape: en lugar del cierre instantáneo del navegador, se anima la salida.
+    event.preventDefault();
+    onClose();
+  }
+
+  function handleNativeClose() {
+    // Si el navegador cerró el diálogo por su cuenta (sin pasar por la salida
+    // animada, que antes cambia data-state), se sincroniza el estado.
+    if (dialogRef.current?.dataset.state === 'open') onClose();
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      id={DRAWER_ID}
+      aria-label="Menú de navegación"
+      onCancel={handleCancel}
+      onClose={handleNativeClose}
+      className="drawer fixed inset-0 m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 text-inherit backdrop:bg-transparent md:hidden"
+    >
+      <div
+        data-drawer-part
+        className="drawer-overlay absolute inset-0 bg-black/70"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        data-drawer-part
+        className="drawer-panel absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto overscroll-contain border-r border-line bg-paper pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl"
+      >
+        {children}
+      </div>
+    </dialog>
+  );
+}
+
 export default function Sidebar({ collapsed, onToggleCollapsed }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef(null);
+
+  // El drawer solo existe en móvil: si la ventana pasa a escritorio, se cierra.
+  useEffect(() => {
+    const desktop = window.matchMedia(DESKTOP_QUERY);
+    function handleChange(event) {
+      if (event.matches) setOpen(false);
+    }
+    desktop.addEventListener('change', handleChange);
+    return () => desktop.removeEventListener('change', handleChange);
+  }, []);
+
+  function closeDrawer() {
+    setOpen(false);
+  }
 
   function handleLogout() {
     setOpen(false);
@@ -90,12 +216,17 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
   return (
     <>
       {/* ---------- Header móvil ---------- */}
-      <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line bg-paper/85 px-4 py-3 backdrop-blur-xl md:hidden">
-        <Brand compact onNavigate={() => setOpen(false)} />
+      <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line bg-paper/85 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl md:hidden">
+        <Brand compact onNavigate={closeDrawer} />
         {user && (
           <button
+            ref={menuButtonRef}
+            type="button"
             onClick={() => setOpen(true)}
             aria-label="Abrir menú"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-controls={DRAWER_ID}
             className="icon-btn shrink-0"
           >
             <Menu className="h-5 w-5" strokeWidth={1.75} />
@@ -112,6 +243,7 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
         <Brand collapsed={collapsed} />
 
         <button
+          type="button"
           onClick={onToggleCollapsed}
           aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
           className="icon-btn absolute -right-3.5 top-20 h-7 w-7 bg-card shadow-lg"
@@ -123,30 +255,21 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
           )}
         </button>
 
-        <nav className={`mt-2 flex flex-1 flex-col gap-1.5 ${collapsed ? 'px-2' : 'px-4'}`}>
+        <nav
+          aria-label="Principal"
+          className={`mt-2 flex flex-1 flex-col gap-1.5 ${collapsed ? 'px-2' : 'px-4'}`}
+        >
           <NavLinks collapsed={collapsed} />
         </nav>
 
         {user && (
           <div className={`border-t border-line pb-6 pt-4 ${collapsed ? 'px-2' : 'px-4'}`}>
-            {!collapsed && (
-              <div className="mb-3 flex min-w-0 items-center gap-3 rounded-2xl border border-line bg-card/50 px-3 py-2.5">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-dark/15 font-display text-sm font-semibold text-ink-dark">
-                  {user.name?.[0]?.toUpperCase() ?? '♥'}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[0.7rem] uppercase tracking-widest text-ink/60">
-                    Hola
-                  </span>
-                  <span className="block truncate text-sm font-medium text-ink-strong">
-                    {user.name}
-                  </span>
-                </span>
-              </div>
-            )}
+            {!collapsed && <UserCard name={user.name} />}
             <button
+              type="button"
               onClick={handleLogout}
               title={collapsed ? 'Salir' : undefined}
+              aria-label={collapsed ? 'Salir' : undefined}
               className="nav-link w-full"
               style={collapsed ? { justifyContent: 'center', paddingInline: 0 } : undefined}
             >
@@ -158,52 +281,33 @@ export default function Sidebar({ collapsed, onToggleCollapsed }) {
       </aside>
 
       {/* ---------- Drawer móvil ---------- */}
-      {open && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          />
-          <aside className="fade-in-up absolute inset-y-0 left-0 flex w-72 flex-col border-r border-line bg-paper shadow-2xl">
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Cerrar menú"
-              className="icon-btn absolute right-4 top-4"
-            >
-              <X className="h-4 w-4" strokeWidth={1.75} />
+      {user && (
+        <MobileDrawer open={open} onClose={closeDrawer} returnFocusRef={menuButtonRef}>
+          <button
+            type="button"
+            onClick={closeDrawer}
+            aria-label="Cerrar menú"
+            className="icon-btn absolute right-4 top-[max(1rem,env(safe-area-inset-top))]"
+          >
+            <X className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+
+          <div className="pr-12">
+            <Brand onNavigate={closeDrawer} />
+          </div>
+
+          <nav aria-label="Principal" className="flex flex-1 flex-col gap-1.5 px-4">
+            <NavLinks collapsed={false} onNavigate={closeDrawer} />
+          </nav>
+
+          <div className="border-t border-line px-4 pb-6 pt-4">
+            <UserCard name={user.name} />
+            <button type="button" onClick={handleLogout} className="nav-link w-full">
+              <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+              Salir
             </button>
-
-            <div className="pr-12">
-              <Brand onNavigate={() => setOpen(false)} />
-            </div>
-
-            <nav className="flex flex-1 flex-col gap-1.5 px-4">
-              <NavLinks collapsed={false} onNavigate={() => setOpen(false)} />
-            </nav>
-
-            {user && (
-              <div className="border-t border-line px-4 pb-6 pt-4">
-                <div className="mb-3 flex min-w-0 items-center gap-3 rounded-2xl border border-line bg-card/50 px-3 py-2.5">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-dark/15 font-display text-sm font-semibold text-ink-dark">
-                    {user.name?.[0]?.toUpperCase() ?? '♥'}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[0.7rem] uppercase tracking-widest text-ink/60">
-                      Hola
-                    </span>
-                    <span className="block truncate text-sm font-medium text-ink-strong">
-                      {user.name}
-                    </span>
-                  </span>
-                </div>
-                <button onClick={handleLogout} className="nav-link w-full">
-                  <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.75} />
-                  Salir
-                </button>
-              </div>
-            )}
-          </aside>
-        </div>
+          </div>
+        </MobileDrawer>
       )}
     </>
   );

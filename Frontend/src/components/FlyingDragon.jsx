@@ -1,4 +1,4 @@
-export default function FlyingDragon({ top, duration, delay, scale = 1 }) {
+export default function FlyingDragon({ top, duration, delay = '0s', scale = 1, onAnimationEnd }) {
   return (
     <svg
       viewBox="0 0 100 60"
@@ -9,6 +9,7 @@ export default function FlyingDragon({ top, duration, delay, scale = 1 }) {
         animationDelay: delay,
         '--fly-scale': scale,
       }}
+      onAnimationEnd={onAnimationEnd}
       aria-hidden="true"
     >
       <path

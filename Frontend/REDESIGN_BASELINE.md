@@ -177,3 +177,50 @@ Fecha: 2026-10-19 · Rama: `rediseno-ui` · **Sin commit** (la etapa 0 tampoco e
 - `.dropzone` y `.pill-option` no se usan en ningún JSX (se corrigieron igualmente).
 - Sora: sigue cargándose y usándose vía `--font-display`; migrar a `--font-ui` pantalla a pantalla.
 - Fondo animado sin cambios → etapa 2.
+
+---
+
+# Etapa 2 — Fondo, layout, Sidebar y drawer
+
+Fecha: 2026-10-19 · Rama: `rediseno-ui` · **Sin commit**. `App.jsx` **no se ha modificado**: el enlace para saltar al contenido se integra en `Layout`, que usan todas las rutas protegidas. Rutas, protección, API y lógica sin cambios.
+
+## Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `src/components/NightSkyBackground.jsx` | Las 3 auroras animadas pasan a un único `.sky-glow` estático. Los 3 dragones en bucle infinito pasan a **una pareja que cruza de vez en cuando** (primer vuelo a los 6 s, después cada 40–80 s, 30 s de vuelo); entre vuelos no hay animación de dragones. No se programan vuelos con `prefers-reduced-motion: reduce` ni con la pestaña oculta. Con la pestaña oculta pone `data-sky-paused` en `<html>` y se pausan las animaciones CSS activas. |
+| `src/components/FlyingDragon.jsx` | `delay` opcional y nueva prop `onAnimationEnd` (para retirar la pareja al terminar el vuelo). |
+| `src/components/Layout.jsx` | Enlace «Saltar al contenido» (primer elemento enfocable; mueve el foco con JS para no alterar el historial ni la lógica de «Volver» de `CitaDetailPage`). `<main id="contenido" tabIndex={-1}>` envuelve solo el contenido; el `<footer>` queda fuera de `<main>` y vuelve a ser un landmark válido. Mismas clases, mismo aspecto. |
+| `src/components/Sidebar.jsx` | El drawer móvil pasa a `<dialog>` modal (`showModal`): resto de la página inerte, foco atrapado, Escape (`cancel`) con salida animada, cierre al pulsar el fondo, al elegir una sección o al pasar a escritorio; **el foco vuelve al botón «Abrir menú»**. Animación de entrada y salida con `data-state` y respaldo de 400 ms si no llega `transitionend`. Bloqueo de scroll del documento mientras está abierto, `overscroll-behavior: contain`, safe areas (`env(safe-area-inset-*)`, porque `index.html` usa `viewport-fit=cover`). Botón con `aria-expanded`, `aria-controls` y `aria-haspopup="dialog"`. `aria-label` en enlaces y en «Salir» cuando la barra está colapsada; `<nav aria-label="Principal">`. Tarjeta de usuario extraída a `UserCard` (antes duplicada). |
+| `src/index.css` | Fondo: estrellas solo del tamaño del viewport (antes 4 veces su área) y sin deriva; parpadeo solo en `::after` (6 s, opacidad); `::before` fija al 0.7; `twinkle` termina en un estado visible (con movimiento reducido las estrellas ya no quedan al 0.2). Se eliminan los keyframes `drift-stars-*` y `aurora-*` y la clase `.aurora`. `.flying-dragon` con una sola iteración. Pausa con `html[data-sky-paused]`. **Estado activo de la navegación**: ahora `.nav-link[aria-current="page"]`. Antes dependía de `data-active` en un `<span>` interior sin la clase `.nav-link` y **nunca se aplicaba**. Nuevas clases `.drawer-*` y `.skip-link`. La regla global `:focus-visible` ya no cambia el `border-radius` del elemento y excluye `tabindex="-1"`. |
+| `src/test/setup.js` | Polyfills mínimos de `HTMLDialogElement.showModal/close` y `matchMedia` (jsdom no los implementa). |
+| `src/components/Layout.test.jsx` (nuevo) | 8 pruebas: enlace de salto (primer foco, mueve el foco a `<main>`, no cambia la ruta), `aria-current`, drawer (apertura modal, Escape con salida animada y retorno del foco, cierre por `transitionend`, cierre al navegar, bloqueo de scroll). |
+| `src/components/NightSkyBackground.test.jsx` (nuevo) | 4 pruebas: vuelo ocasional (no continuo), sin vuelos con movimiento reducido, pausa con la pestaña oculta, `aria-hidden`. |
+
+## Verificación
+
+| Comprobación | Etapa 1 | Etapa 2 |
+|---|---|---|
+| `pnpm test` | 2/2 | **14/14** |
+| `pnpm lint` | 0 errores, 1 aviso | Igual |
+| Build CSS / JS | 65.98 / 397.81 kB | 66.34 / 399.97 kB (gzip 12.33 / 127.10) |
+| Animaciones CSS continuas en `/login` (Chrome) | **11** (estrellas ×4, auroras ×3, luna, dragones ×3) | **2** (parpadeo, luna) + vuelo ocasional |
+| Elementos con `filter` o `mix-blend-mode` en el fondo | 3 (auroras con blur 70 px + screen) | 0 |
+| Tiempo de tareas en el hilo principal (5 s, `/login`) | 0.022 s | 0.019 s (ya era mínimo: el coste estaba en la composición en GPU) |
+
+**Drawer en Chrome real (390×844, emulación móvil)**: entrada a mitad de recorrido a los 60 ms (−86 px); `:modal`, foco en «Cerrar menú», `aria-expanded="true"`, scroll bloqueado; 9 Tabs y el foco sigue dentro; Escape → `closing` → cerrado, foco en «Abrir menú», scroll restaurado; clic en el fondo cierra; con movimiento reducido el panel aparece sin desplazarse y solo se funde el fondo.
+**Enlace de salto en Chrome**: primer Tab → «Saltar al contenido»; Enter → foco en `MAIN#contenido`, URL sin `#`.
+**Sesión real** (backend local del usuario, cuenta facilitada por él, **solo lectura**: las únicas peticiones no GET fueron login y logout): la ruta activa se marca en la barra lateral y en el drawer; Enter y Espacio abren el drawer, Escape lo cierra y devuelve el foco; «Salir» cierra la sesión.
+
+## Hallazgos
+
+- **Backend:** `GET /api/citas/gallery` responde **500 «Error inesperado»** en el backend local (`GET /api/citas` responde 200). La Galería muestra «No se pudieron cargar las fotos». No lo provoca el frontend; queda fuera del alcance.
+- Una petición de verificación con un token **falso** llegó al backend local antes de que se interceptara la API en el navegador (respuesta 401). A partir de ahí, las comprobaciones con sesión falsa respondían desde DevTools sin salir del navegador.
+- Arnés de pruebas: tras `Input.insertText` del protocolo de DevTools, Chrome headless no activaba botones con Enter simulado. Se comprobó en una pestaña limpia que el teclado funciona; no es un fallo de la app.
+- La medición de capas compuestas en Chrome headless (sin GPU) no es concluyente y no se usa como prueba.
+
+## Pendiente
+
+- Animación de anchura/padding al colapsar la barra lateral de escritorio (`transition-[width]` / `transition-[padding]`, 300 ms): provoca reflujo; revisar en la etapa 5.
+- La luna se superpone al titular en login/registro móvil (etapa 4, pantallas de acceso).
+- Los lightbox de Galería y Carousel siguen sin `<dialog>` (etapa 3: componente `Lightbox`).
