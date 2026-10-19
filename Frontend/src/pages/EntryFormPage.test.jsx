@@ -127,3 +127,52 @@ describe('EntryFormPage: borrar una foto existente', () => {
     await waitFor(() => expect(dialog.open).toBe(false));
   });
 });
+
+describe('EntryFormPage: guardar mi versión', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('carga mi versión y la envía con los mismos campos por PUT', async () => {
+    const user = userEvent.setup();
+    client.get.mockResolvedValue({ data: citaWith([PHOTO]) });
+    client.put.mockResolvedValue({});
+    renderPage();
+
+    expect(await screen.findByRole('radio', { name: '4 corazones' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: '5 corazones' }));
+    await user.click(screen.getByRole('button', { name: 'Guardar mi versión' }));
+
+    expect(client.put).toHaveBeenCalledWith('/citas/1/mi-entrada', expect.any(FormData));
+    const body = client.put.mock.calls[0][1];
+    expect([...body.keys()]).toEqual([
+      'valoracion', 'queHicimos', 'comoTeSentiste', 'loQueMasGusto', 'loQueMenosGusto', 'intimidad',
+    ]);
+    expect(body.get('valoracion')).toBe('5');
+    expect(body.get('queHicimos')).toBe('Cenamos');
+    expect(body.get('intimidad')).toBe('false');
+  });
+
+  it('sin valoración marca el error junto al campo y no envía', async () => {
+    const user = userEvent.setup();
+    const sinVersion = citaWith([]);
+    sinVersion.entries = [];
+    client.get.mockResolvedValue({ data: sinVersion });
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Guardar mi versión' }));
+
+    expect(client.put).not.toHaveBeenCalled();
+    expect(screen.getByRole('radiogroup', { name: 'Valoración' })).toHaveAccessibleDescription(
+      'Elige una valoración de al menos 1 corazón.'
+    );
+    expect(screen.getByRole('radio', { name: '1 corazón' })).toHaveFocus();
+  });
+
+  it('si la cita no carga, no se queda en el esqueleto', async () => {
+    client.get.mockRejectedValue(new Error('red'));
+    renderPage();
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar la cita');
+    expect(screen.getByRole('link', { name: 'Volver a la cita' })).toHaveAttribute('href', '/citas/1');
+  });
+});

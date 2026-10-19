@@ -13,7 +13,7 @@ describe('entorno de pruebas', () => {
     const onChange = vi.fn();
     render(<HeartRating value={0} onChange={onChange} />);
 
-    await userEvent.click(screen.getByRole('button', { name: '3 corazones' }));
+    await userEvent.click(screen.getByRole('radio', { name: '3 corazones' }));
 
     expect(onChange).toHaveBeenCalledWith(3);
   });

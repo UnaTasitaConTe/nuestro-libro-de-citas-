@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { CalendarDays, MapPin } from 'lucide-react';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import EntryFields from '../components/EntryFields';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import StatusMessage from '../components/ui/StatusMessage';
 import { REPETIRIAMOS_LABEL } from '../constants/repetiriamos';
 import { formatFecha } from '../utils/date';
 
@@ -29,7 +31,15 @@ export default function EntryFormPage() {
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [photoToDelete, setPhotoToDelete] = useState(null);
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [valoracionError, setValoracionError] = useState('');
   const [loading, setLoading] = useState(false);
+  const ratingRef = useRef(null);
+
+  function updateEntry(next) {
+    setEntry(next);
+    setValoracionError('');
+  }
 
   useEffect(() => {
     client.get(`/citas/${id}`).then(({ data }) => {
@@ -46,7 +56,7 @@ export default function EntryFormPage() {
         });
         setExistingPhotos(mine.photos || []);
       }
-    });
+    }).catch(() => setLoadError('No se pudo cargar la cita'));
   }, [id, user.id]);
 
   async function removeExistingPhoto() {
@@ -67,7 +77,8 @@ export default function EntryFormPage() {
     setError('');
 
     if (!entry.valoracion) {
-      setError('Elige una valoración de al menos 1 corazón');
+      setValoracionError('Elige una valoración de al menos 1 corazón.');
+      ratingRef.current?.querySelector('[role="radio"][tabindex="0"]')?.focus();
       return;
     }
 
@@ -85,16 +96,32 @@ export default function EntryFormPage() {
       await client.put(`/citas/${id}/mi-entrada`, body);
       navigate(`/citas/${id}`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar tu entrada');
+      setError(err.response?.data?.error || 'No se pudo guardar tu versión. Vuelve a intentarlo.');
     } finally {
       setLoading(false);
     }
   }
 
+  if (loadError) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-xl">
+          <p role="alert" className="alert alert-danger">
+            {loadError}. Revisa tu conexión y vuelve a intentarlo.
+          </p>
+          <Link to={`/citas/${id}`} className="btn btn-ghost btn-sm mt-4">
+            Volver a la cita
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!cita) {
     return (
       <Layout>
-        <div className="space-y-4">
+        <div className="space-y-4" aria-busy="true">
+          <p role="status" className="sr-only">Cargando la cita…</p>
           <div className="skeleton h-24 rounded-3xl" />
           <div className="skeleton h-72 rounded-3xl" />
         </div>
@@ -106,31 +133,50 @@ export default function EntryFormPage() {
 
   return (
     <Layout>
-      <PageHeader eyebrow="Tu voz" title="Mi versión de la cita 💛" />
+      <PageHeader title="Mi versión de la cita" subtitle="Lo que tú viviste; tu pareja tiene su propio espacio." />
 
-      <div className="surface surface-accent mb-6 px-5 py-4">
-        <p className="font-display text-lg font-semibold text-ink-strong">{cita.nombre}</p>
-        <p className="mt-1 text-sm text-ink">
-          {fecha} · {cita.lugar} · {REPETIRIAMOS_LABEL[cita.repetiriamos]}
+      <section aria-label="Cita" className="surface surface-accent mb-6 px-5 py-4">
+        <p className="break-words font-display text-lg font-semibold text-ink-strong">{cita.nombre}</p>
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4 shrink-0 text-royal-light" strokeWidth={1.75} />
+            <time dateTime={cita.fecha.slice(0, 10)}>{fecha}</time>
+          </span>
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <MapPin className="h-4 w-4 shrink-0 text-royal-light" strokeWidth={1.75} />
+            <span className="break-words">{cita.lugar}</span>
+          </span>
+          <span>
+            ¿Repetiríamos? <strong className="text-ink-dark">{REPETIRIAMOS_LABEL[cita.repetiriamos]}</strong>
+          </span>
         </p>
-      </div>
-
-      {error && <p className="alert alert-danger mb-6">{error}</p>}
+      </section>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <EntryFields
-          entry={entry}
-          setEntry={setEntry}
-          fotos={fotos}
-          setFotos={setFotos}
-          existingPhotos={existingPhotos}
-          onRemoveExisting={setPhotoToDelete}
-        />
+        <div className="surface p-5 sm:p-6">
+          <EntryFields
+            entry={entry}
+            setEntry={updateEntry}
+            fotos={fotos}
+            setFotos={setFotos}
+            existingPhotos={existingPhotos}
+            onRemoveExisting={setPhotoToDelete}
+            valoracionError={valoracionError}
+            ratingRef={ratingRef}
+          />
+        </div>
+
+        <StatusMessage tone="error" className="alert alert-danger">
+          {error}
+        </StatusMessage>
 
         <div className="form-actions">
           <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
-            {loading ? 'Guardando...' : 'Guardar mi versión'}
+            {loading ? 'Guardando…' : 'Guardar mi versión'}
           </button>
+          <Link to={`/citas/${id}`} className="btn btn-ghost btn-lg">
+            Cancelar
+          </Link>
         </div>
       </form>
 
