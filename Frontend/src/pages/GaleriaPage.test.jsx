@@ -36,8 +36,7 @@ describe('GaleriaPage: visor de fotos', () => {
   });
 
   async function openFirst(user) {
-    // El nombre de la miniatura combina el alt y el pie («Picnic Picnic 2 de mayo…»).
-    const thumbs = await screen.findAllByRole('button', { name: /^Picnic/ });
+    const thumbs = await screen.findAllByRole('button', { name: 'Ampliar foto de Picnic, 2 de mayo de 2026' });
     await user.click(thumbs[0]);
     return { trigger: thumbs[0], viewer: screen.getByRole('dialog', { name: 'Visor de fotos' }) };
   }
@@ -48,7 +47,7 @@ describe('GaleriaPage: visor de fotos', () => {
     const { viewer } = await openFirst(user);
 
     expect(viewer.open).toBe(true);
-    expect(within(viewer).getByRole('img', { name: 'Picnic' })).toHaveAttribute('src', '/u/1.jpg');
+    expect(within(viewer).getByRole('img', { name: 'Foto de Picnic' })).toHaveAttribute('src', '/u/1.jpg');
     expect(within(viewer).getByRole('button', { name: 'Cerrar' })).toHaveFocus();
     expect(within(viewer).getByRole('link', { name: 'Picnic' })).toHaveAttribute('href', '/citas/7');
   });
@@ -91,5 +90,42 @@ describe('GaleriaPage: visor de fotos', () => {
     await user.click(within(viewer).getByRole('button', { name: 'Cerrar' }));
 
     await waitFor(() => expect(viewer.open).toBe(false));
+  });
+});
+
+describe('GaleriaPage: estados', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('las miniaturas tienen un nombre único y no repiten el pie', async () => {
+    client.get.mockResolvedValue({ data: { photos: PHOTOS, totalPages: 1, total: 2 } });
+    renderPage();
+    const list = await screen.findByRole('list', { name: 'Fotos' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(list).getByRole('button', { name: 'Ampliar foto de Museo, 10 de junio de 2026' })).toBeInTheDocument();
+    expect(screen.getAllByRole('status').some((s) => s.textContent === '2 fotos')).toBe(true);
+  });
+
+  it('si falla, lo dice con una salida y el error se limpia al reintentar', async () => {
+    const user = userEvent.setup();
+    client.get
+      .mockRejectedValueOnce(new Error('red'))
+      .mockResolvedValueOnce({ data: { photos: PHOTOS, totalPages: 1, total: 2 } });
+    renderPage();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('No se pudieron cargar las fotos');
+    await user.click(within(alert).getByRole('button', { name: 'vuelve a intentarlo' }));
+
+    expect(await screen.findByRole('list', { name: 'Fotos' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toBeEmptyDOMElement();
+  });
+
+  it('sin fotos invita a ir a las citas', async () => {
+    client.get.mockResolvedValue({ data: { photos: [], totalPages: 1, total: 0 } });
+    renderPage();
+    expect(await screen.findByText('Todavía no hay fotos')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ir a sus citas' })).toHaveAttribute('href', '/');
   });
 });

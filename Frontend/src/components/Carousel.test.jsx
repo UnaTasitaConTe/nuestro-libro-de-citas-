@@ -12,7 +12,7 @@ describe('Carousel', () => {
   it('abre el visor compartido desde la foto central', async () => {
     const user = userEvent.setup();
     render(<Carousel photos={PHOTOS} alt="Cena" />);
-    const center = screen.getByRole('button', { name: 'Ampliar foto 1' });
+    const center = screen.getByRole('button', { name: 'Ampliar foto 1 de 2' });
 
     await user.click(center);
 
@@ -49,5 +49,25 @@ describe('Carousel', () => {
     rerender(<Carousel photos={PHOTOS.slice(0, 1)} alt="Cena" />);
 
     expect(screen.getAllByRole('img', { name: 'Cena', hidden: true }).length).toBeGreaterThan(0);
+  });
+
+  it('una sola parada para la foto central: las laterales son solo un atajo visual', () => {
+    render(<Carousel photos={[...PHOTOS, { id: 3, foto_url: '/u/3.jpg', authorName: 'Ana' }]} alt="Cena" />);
+    expect(screen.getAllByRole('button', { name: /^Ampliar/ })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /^Ver foto/ })).not.toBeInTheDocument();
+  });
+
+  it('las flechas del teclado recorren las fotos y el cambio se anuncia', async () => {
+    const user = userEvent.setup();
+    render(<Carousel photos={PHOTOS} alt="Cena" />);
+    const region = screen.getByRole('region', { name: 'Fotos' });
+    expect(region).toHaveAttribute('aria-roledescription', 'carrusel');
+
+    screen.getByRole('button', { name: 'Ampliar foto 1 de 2' }).focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(screen.getByRole('button', { name: 'Ampliar foto 2 de 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir a foto 2' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Foto 2 de 2');
   });
 });
