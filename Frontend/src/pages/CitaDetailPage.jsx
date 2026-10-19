@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ArrowLeft, Bell, ImagePlus, PenLine, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Bell, CalendarDays, ImagePlus, MapPin, PenLine, Pencil, Trash2 } from 'lucide-react';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
@@ -21,34 +21,44 @@ const ENTRY_SECTIONS = [
   { key: 'lo_que_menos_gusto', label: 'Lo que menos me gustó' },
 ];
 
+const ratingFormat = new Intl.NumberFormat('es', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+// Polaroid de lectura: inclinada como en el álbum, pero sin elevarse al pasar
+// el ratón (no es un enlace; moverse sugeriría que se puede pulsar).
 function EntryView({ entry, delay, index }) {
+  const headingId = `version-${entry.id}`;
   return (
     <article
-      className="polaroid-tilt fade-in-up relative rounded-md border border-ink-dark/30 bg-polaroid p-5 shadow-[0_16px_38px_rgba(3,6,20,0.6)] hover:shadow-[0_26px_52px_-16px_rgba(255,204,51,0.35)] sm:p-6"
+      aria-labelledby={headingId}
+      className="fade-in-up relative rounded-md border border-ink-dark/30 bg-polaroid p-5 shadow-[0_16px_38px_rgba(3,6,20,0.6)] sm:p-6"
       style={{
         animationDelay: `${delay}s`,
-        '--tilt': `${ENTRY_TILTS[index % ENTRY_TILTS.length]}deg`,
+        rotate: `${ENTRY_TILTS[index % ENTRY_TILTS.length]}deg`,
       }}
     >
       <span className="washi-tape" aria-hidden="true" />
 
-      <p className="mb-4 text-center font-hand text-3xl leading-none text-polaroid-ink">
-        {entry.user_name}
-      </p>
+      {/* La fuente va en el span: la regla base h1–h4 de index.css (sin capa)
+          ganaría a la utilidad font-hand puesta en el propio <h2>. */}
+      <h2 id={headingId} className="text-center text-3xl font-normal leading-none text-polaroid-ink">
+        {/* El espacio va fuera del span: dentro se pierde al calcular el nombre accesible. */}
+        <span className="sr-only">Versión de</span> <span className="font-hand">{entry.user_name}</span>
+      </h2>
 
-      <p className="eyebrow mb-1.5">Valoración</p>
-      <HeartRating value={entry.valoracion} readOnly />
+      <div className="mt-4 flex justify-center">
+        <HeartRating value={entry.valoracion} readOnly label={`Valoración: ${entry.valoracion} de 5 corazones`} />
+      </div>
 
-      <div className="mt-5 grid gap-4 border-t border-ink-dark/20 pt-5">
+      <dl className="mt-5 grid gap-4 border-t border-ink-dark/20 pt-5">
         {ENTRY_SECTIONS.map(({ key, label }) => (
           <div key={key}>
-            <p className="eyebrow mb-1">{label}</p>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-polaroid-ink">
-              {entry[key] || '—'}
-            </p>
+            <dt className="text-xs font-semibold text-polaroid-ink-soft">{label}</dt>
+            <dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-polaroid-ink">
+              {entry[key] || <span className="text-polaroid-ink-soft">Sin escribir</span>}
+            </dd>
           </div>
         ))}
-      </div>
+      </dl>
     </article>
   );
 }
@@ -75,6 +85,7 @@ export default function CitaDetailPage() {
   const [deleteError, setDeleteError] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   const [photoError, setPhotoError] = useState('');
   const [nudging, setNudging] = useState(false);
   const [nudge, setNudge] = useState(null); // { tone: 'success' | 'error', text }
@@ -94,12 +105,14 @@ export default function CitaDetailPage() {
     if (!files.length) return;
 
     setUploadError('');
+    setUploadStatus('');
     setUploading(true);
     try {
       const body = new FormData();
       files.forEach((f) => body.append('fotos', f));
       const { data } = await client.post(`/citas/${id}/mi-entrada/fotos`, body);
       setCita(data);
+      setUploadStatus(files.length === 1 ? 'Foto agregada' : `${files.length} fotos agregadas`);
     } catch (err) {
       setUploadError(err.response?.data?.error || 'No se pudieron subir las fotos');
     } finally {
@@ -135,7 +148,7 @@ export default function CitaDetailPage() {
     setNudge(null);
     try {
       await client.post(`/citas/${id}/nudge`);
-      setNudge({ tone: 'success', text: '✅ ¡Recordatorio enviado! Tu pareja recibirá un correo.' });
+      setNudge({ tone: 'success', text: 'Recordatorio enviado. Tu pareja recibirá un correo.' });
     } catch (err) {
       setNudge({ tone: 'error', text: err.response?.data?.error || 'No se pudo enviar el recordatorio' });
     } finally {
@@ -146,7 +159,15 @@ export default function CitaDetailPage() {
   if (error) {
     return (
       <Layout>
-        <p className="alert alert-danger">{error}</p>
+        <div className="mx-auto max-w-xl">
+          <p role="alert" className="alert alert-danger">
+            {error}. Revisa tu conexión y vuelve a intentarlo.
+          </p>
+          <button type="button" onClick={handleBack} className="btn btn-ghost btn-sm mt-4 pointer-coarse:min-h-11">
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+            Volver
+          </button>
+        </div>
       </Layout>
     );
   }
@@ -154,9 +175,11 @@ export default function CitaDetailPage() {
   if (!cita) {
     return (
       <Layout>
-        <div className="mx-auto max-w-xl space-y-4">
-          <div className="skeleton h-40 rounded-3xl" />
-          <div className="skeleton h-64 rounded-3xl" />
+        <div className="mx-auto max-w-2xl space-y-4" aria-busy="true">
+          <p role="status" className="sr-only">Cargando la cita…</p>
+          <div className="skeleton h-9 w-24 rounded-full" />
+          <div className="skeleton h-52 rounded-3xl" />
+          <div className="skeleton mx-auto h-80 max-w-lg rounded-md" />
         </div>
       </Layout>
     );
@@ -171,144 +194,170 @@ export default function CitaDetailPage() {
     e.photos.map((p) => ({ ...p, authorName: e.user_name }))
   );
 
+  const isAdmin = user.role === 'ADMIN';
+
   return (
     <Layout>
-      {/* ---------- Barra de acciones ---------- */}
-      <div className="mb-8 flex flex-col gap-3">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="btn btn-ghost btn-sm self-start"
-        >
-          <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
-          Volver
-        </button>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="btn btn-ghost btn-sm mb-6 pointer-coarse:min-h-11"
+      >
+        <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+        Volver
+      </button>
 
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          {user.role === 'ADMIN' && (
-            <Link to={`/citas/${cita.id}/editar`} className="btn btn-ghost btn-sm">
+      {/* ---------- Cabecera de la cita ---------- */}
+      <section
+        aria-labelledby="cita-titulo"
+        className="surface-glass surface-accent fade-in-up mx-auto mb-12 max-w-2xl px-6 py-8 sm:px-10"
+      >
+        <h1
+          id="cita-titulo"
+          className="break-words font-display text-3xl font-bold leading-tight text-ink-strong sm:text-4xl"
+        >
+          {cita.nombre}
+        </h1>
+
+        <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-ink">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4 shrink-0 text-royal-light" strokeWidth={1.75} />
+            <time dateTime={cita.fecha.slice(0, 10)}>{fecha}</time>
+          </span>
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <MapPin className="h-4 w-4 shrink-0 text-royal-light" strokeWidth={1.75} />
+            <span className="break-words">{cita.lugar}</span>
+          </span>
+        </p>
+
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+          {promedio > 0 && (
+            <div className="flex items-center gap-2.5">
+              <HeartRating
+                value={Math.round(promedio)}
+                readOnly
+                label={`Valoración media: ${ratingFormat.format(promedio)} de 5`}
+              />
+              <span aria-hidden="true" className="font-display text-lg font-semibold tabular-nums text-ink-dark">
+                {ratingFormat.format(promedio)}
+              </span>
+            </div>
+          )}
+          <span className="chip">
+            ¿Repetiríamos?
+            <strong className="text-ink-dark">{REPETIRIAMOS_LABEL[cita.repetiriamos]}</strong>
+          </span>
+        </div>
+
+        {bothTold && (
+          <p className="mt-4 text-xs text-ink/80">Las dos versiones ya están contadas.</p>
+        )}
+
+        {/* Acciones dentro de la tarjeta: son de esta cita y así no compiten con la luna del fondo. */}
+        <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-line pt-6">
+          <Link to={`/citas/${cita.id}/mi-entrada`} className="btn btn-secondary btn-sm pointer-coarse:min-h-11">
+            <PenLine className="h-4 w-4" strokeWidth={1.75} />
+            {myEntry ? 'Editar mi versión' : 'Agregar mi versión'}
+          </Link>
+          {isAdmin && (
+            <Link to={`/citas/${cita.id}/editar`} className="btn btn-ghost btn-sm pointer-coarse:min-h-11">
               <Pencil className="h-4 w-4" strokeWidth={1.75} />
               Editar cita
             </Link>
           )}
-          <Link to={`/citas/${cita.id}/mi-entrada`} className="btn btn-secondary btn-sm">
-            <PenLine className="h-4 w-4" strokeWidth={1.75} />
-            {myEntry ? 'Editar mi versión' : 'Agregar mi versión'}
-          </Link>
-          {user.role === 'ADMIN' && (
-            <button type="button" onClick={() => setConfirmingDelete(true)} className="btn btn-danger btn-sm">
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="btn btn-danger btn-sm pointer-coarse:min-h-11 sm:ml-auto"
+            >
               <Trash2 className="h-4 w-4" strokeWidth={1.75} />
               Borrar cita
             </button>
           )}
         </div>
-      </div>
-
-      {/* ---------- Hero de la cita ---------- */}
-      <section className="surface-glass surface-accent fade-in-up mx-auto mb-10 max-w-xl px-6 py-8 text-center sm:px-10">
-        <p className="eyebrow">{fecha}</p>
-
-        <h2 className="mt-2 font-display text-3xl font-bold leading-tight text-ink-strong sm:text-4xl">
-          <span className="title-gold">{cita.nombre}</span>
-        </h2>
-
-        <p className="mt-2 text-sm text-ink">{cita.lugar}</p>
-
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <span className="chip">
-            ¿Repetiríamos?
-            <strong className="text-ink-dark">{REPETIRIAMOS_LABEL[cita.repetiriamos]}</strong>
-          </span>
-          {promedio > 0 && (
-            <span className="chip chip-gold">Promedio {promedio.toFixed(1)}</span>
-          )}
-        </div>
-
-        {promedio > 0 && (
-          <div className="mt-4 flex justify-center">
-            <HeartRating value={Math.round(promedio)} readOnly />
-          </div>
-        )}
-
-        {bothTold && (
-          <p className="mt-4 text-xs text-ink/70">
-            Ya no se puede borrar: las dos versiones fueron contadas 💛
-          </p>
-        )}
         <StatusMessage tone="error" className="alert alert-danger mt-4">
           {deleteError}
         </StatusMessage>
       </section>
 
       {/* ---------- Fotos ---------- */}
-      <div className="mx-auto mb-2 max-w-lg">
-        <Carousel photos={allPhotos} alt={cita.nombre} onDelete={setPhotoToDelete} />
-      </div>
-      <StatusMessage tone="error" className="alert alert-danger mx-auto max-w-md">
-        {photoError}
-      </StatusMessage>
-
-      {myEntry ? (
-        <div className="mb-12 mt-4 flex flex-col items-center">
-          <label className="btn btn-secondary btn-sm cursor-pointer">
-            <ImagePlus className="h-4 w-4" strokeWidth={1.75} />
-            {uploading ? 'Subiendo...' : 'Agregar fotos'}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              disabled={uploading}
-              onChange={handleAddPhotos}
-            />
-          </label>
-          <StatusMessage tone="error" className="alert alert-danger mt-3">
-            {uploadError}
-          </StatusMessage>
+      <section aria-labelledby="cita-fotos" className="mb-12">
+        <h2 id="cita-fotos" className="sr-only">Fotos</h2>
+        <div className="mx-auto mb-2 max-w-lg">
+          <Carousel photos={allPhotos} alt={`Foto de ${cita.nombre}`} onDelete={setPhotoToDelete} />
         </div>
-      ) : (
-        <div className="mb-12" />
-      )}
+        <StatusMessage tone="error" className="alert alert-danger mx-auto max-w-md">
+          {photoError}
+        </StatusMessage>
+
+        {myEntry && (
+          <div className="mt-4 flex flex-col items-center">
+            {/* El input queda accesible por teclado (sr-only, no display:none);
+                el foco se muestra en la etiqueta con has-focus-visible. */}
+            <label
+              className={`btn btn-secondary btn-sm pointer-coarse:min-h-11 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink-dark ${
+                uploading ? 'cursor-progress opacity-60' : 'cursor-pointer'
+              }`}
+            >
+              <ImagePlus className="h-4 w-4" strokeWidth={1.75} />
+              {uploading ? 'Subiendo…' : 'Agregar fotos'}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                disabled={uploading}
+                onChange={handleAddPhotos}
+              />
+            </label>
+            <StatusMessage tone="error" className="alert alert-danger mt-3">
+              {uploadError}
+            </StatusMessage>
+            <StatusMessage className="sr-only">{uploadStatus}</StatusMessage>
+          </div>
+        )}
+      </section>
 
       {/* ---------- Versiones ---------- */}
       {cita.entries.length === 0 && (
         <div className="surface mx-auto max-w-md border-dashed p-8 text-center">
-          <p className="text-sm text-ink">
-            Nadie ha contado su versión de esta cita todavía.
-          </p>
+          <p className="text-sm text-ink">Nadie ha contado su versión de esta cita todavía.</p>
+          <Link to={`/citas/${cita.id}/mi-entrada`} className="btn btn-primary btn-sm mt-4 pointer-coarse:min-h-11">
+            <PenLine className="h-4 w-4" strokeWidth={1.75} />
+            Contar mi versión
+          </Link>
         </div>
       )}
 
-      {/* Botón de recordatorio cuando falta la versión de la pareja */}
+      {/* Recordatorio cuando falta la versión de la pareja */}
       {myEntry && !bothTold && (
-        <div className="mx-auto mb-8 max-w-md surface surface-accent rounded-2xl px-5 py-4 text-center">
-          <p className="text-sm text-ink mb-3">
-            Tu pareja aún no ha escrito su versión de esta cita.
-          </p>
+        <div className="surface mx-auto mb-12 flex max-w-md flex-col items-center gap-3 rounded-2xl px-5 py-5 text-center">
+          <p className="text-sm text-ink">Tu pareja aún no ha escrito su versión de esta cita.</p>
           <button
             type="button"
             onClick={handleNudge}
             disabled={nudging}
-            className="btn btn-secondary btn-sm inline-flex items-center gap-2"
+            className="btn btn-secondary btn-sm pointer-coarse:min-h-11"
           >
             <Bell className="h-4 w-4" strokeWidth={1.75} />
-            {nudging ? 'Enviando...' : 'Recordar a mi pareja 💌'}
+            {nudging ? 'Enviando…' : 'Recordar a mi pareja'}
           </button>
           {/* Una sola región cortés para éxito y error: si cambiara el role al
               cambiar el resultado, el anuncio dejaría de ser fiable. */}
-          <StatusMessage
-            className={`mt-3 text-xs ${nudge?.tone === 'success' ? 'text-success' : 'text-danger'}`}
-          >
+          <StatusMessage className={`text-xs ${nudge?.tone === 'success' ? 'text-success' : 'text-danger'}`}>
             {nudge?.text}
           </StatusMessage>
         </div>
       )}
 
-      <div className="mx-auto grid max-w-3xl gap-x-10 gap-y-16 px-2 md:grid-cols-2">
-        {cita.entries.map((entry, i) => (
-          <EntryView key={entry.id} entry={entry} delay={i * 0.12} index={i} />
-        ))}
-      </div>
+      {cita.entries.length > 0 && (
+        <div className="mx-auto grid max-w-3xl gap-x-10 gap-y-16 px-2 md:grid-cols-2">
+          {cita.entries.map((entry, i) => (
+            <EntryView key={entry.id} entry={entry} delay={i * 0.12} index={i} />
+          ))}
+        </div>
+      )}
 
       <ConfirmDialog
         open={photoToDelete !== null}
